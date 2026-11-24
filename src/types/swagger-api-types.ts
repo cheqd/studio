@@ -2441,6 +2441,44 @@
  *         error:
  *           type: string
  *           example: Unauthorized Error
+ *     RateLimited:
+ *       description: "Too many requests from this IP address or account in the current window (defaults 1000 a minute per IP, 600 a minute per account). Sent with a `Retry-After` header in seconds, and `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset` on every response."
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Too many requests. Try again later.
+ *         code:
+ *           type: string
+ *           enum: [ rate_limited ]
+ *     PayloadTooLarge:
+ *       description: "The JSON body is larger than the limit: 1 MB on most routes (`JSON_BODY_LIMIT`), 10 MB on `POST /resource/create/{did}` and `POST /credentials/import` (`JSON_BODY_LIMIT_LARGE`). The body of this answer is the web framework's default error page, not JSON."
+ *       type: string
+ *     EngineUnavailable:
+ *       description: "Nothing was done and the request can be retried: the ledger is busy for this account (`code: LedgerUnavailable`), the identity engine for the artefact could not be determined (`code: EngineRoutingUnavailable`), or the engine is not configured (`code: engine_unavailable`). A retryable answer carries a `Retry-After` header in seconds."
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *     EngineNotImplemented:
+ *       description: "The identity engine of this account or artefact does not offer this operation (`code: NotImplemented`), or does not support what was asked (`code: NotSupported`, for example an encrypted status list on Credo, or an offer to a Credo DID held by another account)."
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *           enum: [ NotImplemented, NotSupported ]
+ *     Gone:
+ *       description: "The operation has been withdrawn (`code: Gone`). Encrypted status lists can no longer be created."
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
  *     StatusUpdateConflict:
  *       description: "The status change would change nothing, so nothing was written: the credential is already revoked (`already_revoked`), already suspended (`already_suspended`), not suspended when asked to reinstate (`not_suspended`), or revoked when asked to suspend or reinstate (`credential_revoked`; revocation cannot be undone). The same on both engines."
  *       type: object

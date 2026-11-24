@@ -88,11 +88,11 @@ existing service, so wiring changes no request, response or status code.
 | `GET /did/list` | `did` | none | Yes |
 | `POST /did/export/:did` | `did` | `did` | Yes |
 | `POST /account/export-keys` (DID export) | `did` | `did` | Yes |
-| `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
+| `POST /providers/:providerId/did/import` (Dock hand-off export) | `did` | `did` | **No.** The route handler (`providers.controller.ts`) exports with `agent.exportDid` (the Veramo service, unrouted) and then calls `DockIdentityService.importDidV2`. Only `DockIdentityService.importDid` exports through the router, and the route does not call it. See "Deliberately not wired" |
 | `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
 | `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
 | `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; an issuer Studio has no record of is a new artefact (Credo) | Yes |
-| `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
+| `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | `did` (the issuer DID), as for `POST /credential/issue`: both go through `issue_credential`, whose engine is the issuer DID's recorded engine (an issuer with no record counts as new, Credo) | Yes |
 | `POST /credential/verify` | `credential` | none | Yes |
 | Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |
 | Issued-credential fetch from the provider (`fetchCredentialFromProvider`) | `credential` | `credential` | Yes |
@@ -128,7 +128,7 @@ existing service, so wiring changes no request, response or status code.
 | Payment-account key creation (`customer.ts` create, `account.ts` bootstrap) | These create the customer's Secp256k1 payer key, not a key-family API route. `customer.ts` also builds the strategy with the customer name rather than the id (the same kind of bug as the providers controller), so the router would be handed the wrong identity. Leave on Veramo until that is fixed and the payer key policy for Credo is decided. |
 | API keys, operations and payment-account export (`setAPIKey`, `getAPIKey`, `listOperations`, `exportPaymentAccountKeys`) | Studio concerns, deliberately outside `IdentityEngine` (`StudioAccountServices`). |
 | `POST /providers/:providerId/did/import` in `providers.controller.ts` | It builds `IdentityServiceStrategySetup` with the whole customer entity instead of the customer id (existing bug). Routing it would put an object in the routing log and flag lookup. Fix the argument first, then wire. |
-| Credo method bodies (`CredoEngine` throws `NotImplementedByEngine` for credentials and status lists) | Other agents are building them. Nothing here changes `credo/`. |
+| Credo methods still missing | Credential and status-list bodies are built (`credo/credentials.ts`, `credo/status-lists.ts`). `CredoEngine` still throws `NotImplementedByEngine` (501) for `importKey`, `importDid`, `exportDid`, `broadcastStatusList2021`, `broadcastBitstringStatusList` and `remunerateStatusList2021`. |
 
 ## Differences between the routed and the direct path
 

@@ -146,8 +146,38 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async issue(request: Request, response: Response) {
@@ -266,8 +296,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async verify(request: Request, response: Response) {
@@ -380,14 +434,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
 	 *       409:
 	 *         description: The change would do nothing; see `code`.
 	 *         content:
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
@@ -509,14 +593,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
 	 *       409:
 	 *         description: The change would do nothing; see `code`.
 	 *         content:
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async suspend(request: Request, response: Response) {
@@ -639,14 +753,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
 	 *       409:
 	 *         description: The change would do nothing; see `code`.
 	 *         content:
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async reinstate(request: Request, response: Response) {
@@ -817,8 +961,26 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
 		const {
@@ -915,8 +1077,26 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async getIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
@@ -1004,8 +1184,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async updateIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
@@ -1092,8 +1296,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async retryIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
