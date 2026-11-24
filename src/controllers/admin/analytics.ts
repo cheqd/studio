@@ -25,7 +25,7 @@ import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
 import { paginationValidators } from './customers.js';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const isRealDate = (value: unknown): boolean =>
+export const isRealDate = (value: unknown): boolean =>
 	typeof value === 'string' &&
 	DATE.test(value) &&
 	!Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&

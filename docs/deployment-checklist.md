@@ -122,6 +122,10 @@ does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/l
       `ledger_unavailable`, `ledger_rejected`); status list create and update now answer `402` for an unfunded payer,
       as the DID and resource routes already did. Rollback: the migration `down` drops the column.
 
+- [ ] Audit-log filters (U-43). The migration `1791702500300` adds two indexes on the small `adminAuditLog` table
+      (`action, createdAt` and `actorUserId, createdAt`; `IF NOT EXISTS`, `lock_timeout = 3s`). No data change.
+      Rollback: the migration `down` drops them.
+
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
 

@@ -327,9 +327,9 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 
 	it('GET /admin/audit-log paginates with defaults 25 and a maximum of 100', async () => {
 		await call(audit, 'list', AuditLogAdminController.listValidator);
-		expect(service.auditLog).toHaveBeenCalledWith(1, 25);
+		expect(service.auditLog).toHaveBeenCalledWith(1, 25, {});
 		await call(audit, 'list', AuditLogAdminController.listValidator, { query: { page: '3', limit: '100' } });
-		expect(service.auditLog).toHaveBeenLastCalledWith(3, 100);
+		expect(service.auditLog).toHaveBeenLastCalledWith(3, 100, {});
 		expect(
 			(await call(audit, 'list', AuditLogAdminController.listValidator, { query: { limit: '101' } })).status
 		).toBe(400);

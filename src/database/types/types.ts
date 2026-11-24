@@ -101,6 +101,7 @@ import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studi
 import { StudioMigrations1791702300000 } from '../migrations/1791702300000-studio-migrations.js';
 import { StudioMigrations1791702500100 } from '../migrations/1791702500100-studio-migrations.js';
 import { StudioMigrations1791702500200 } from '../migrations/1791702500200-studio-migrations.js';
+import { StudioMigrations1791702500300 } from '../migrations/1791702500300-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -253,6 +254,8 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791702500100,
 				// Add operation.errorCategory for failed ledger writes (U-30)
 				StudioMigrations1791702500200,
+				// Add the audit-log filter indexes (U-43)
+				StudioMigrations1791702500300,
 			],
 			entities: [
 				...Entities,

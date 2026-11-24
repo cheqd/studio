@@ -294,6 +294,16 @@ export function opaqueAccountRef(customerId: string): string {
 	return `acct_${createHash('sha256').update(`studio:stalled-account:${customerId}`).digest('hex').slice(0, 12)}`;
 }
 
+/** Optional filters of the staff audit log (U-43). Dates are UTC days, YYYY-MM-DD, both included. */
+export interface AuditLogFilter {
+	action?: string;
+	actor?: string;
+	targetCustomerId?: string;
+	q?: string;
+	from?: string;
+	to?: string;
+}
+
 export interface FunnelStep {
 	key: string;
 	label: string;
@@ -954,19 +964,47 @@ export class AdminAnalyticsService {
 	 * Staff actions, newest first. `staff` is the acting staff member's Studio email when the actor is a known user,
 	 * otherwise the actor id as recorded. `target` is the customer id (the row outlives the customer); the audit log
 	 * never stores a customer's name or email.
+	 *
+	 * Filters (U-43), all optional and combined with AND: `action` (exact), `actor` (the actor id, or the staff email,
+	 * case-insensitive), `targetCustomerId` (exact), `q` (case-insensitive substring of the reason or the ticket
+	 * reference), `from` and `to` (UTC dates, both included). Every value is a bound parameter.
 	 */
-	async auditLog(page: number, limit: number) {
+	async auditLog(page: number, limit: number, filter: AuditLogFilter = {}) {
+		const clauses: string[] = [];
+		const parameters: unknown[] = [];
+		const bind = (value: unknown) => {
+			parameters.push(value);
+			return `$${parameters.length}`;
+		};
+		if (filter.action) clauses.push(`a."action" = ${bind(filter.action)}`);
+		if (filter.actor) {
+			const actor = bind(filter.actor);
+			clauses.push(`(a."actorUserId" = ${actor} OR lower(sc."email") = lower(${actor}))`);
+		}
+		if (filter.targetCustomerId) clauses.push(`a."targetCustomerId" = ${bind(filter.targetCustomerId)}::uuid`);
+		if (filter.q) {
+			const like = bind(`%${filter.q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`);
+			clauses.push(`(a."reason" ILIKE ${like} OR a."ticketRef" ILIKE ${like})`);
+		}
+		if (filter.from) clauses.push(`a."createdAt" >= ${bind(`${filter.from}T00:00:00Z`)}::timestamptz`);
+		if (filter.to) {
+			clauses.push(`a."createdAt" < (${bind(`${filter.to}T00:00:00Z`)}::timestamptz + interval '1 day')`);
+		}
+		const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+		const source = `FROM "adminAuditLog" a
+				LEFT JOIN "user" su ON su."logToId" = a."actorUserId"
+				LEFT JOIN "customer" sc ON sc."customerId" = su."customerId"
+				${where}`;
+		const filterParameters = [...parameters];
 		const [entries, total] = await Promise.all([
 			this.rows(
 				`SELECT a."id", a."createdAt" AS "when", COALESCE(sc."email", a."actorUserId") AS staff, a."action",
 					a."targetCustomerId" AS target, a."reason", a."ticketRef"
-				FROM "adminAuditLog" a
-				LEFT JOIN "user" su ON su."logToId" = a."actorUserId"
-				LEFT JOIN "customer" sc ON sc."customerId" = su."customerId"
-				ORDER BY a."createdAt" DESC, a."id" LIMIT $1 OFFSET $2`,
-				[limit, (page - 1) * limit]
+				${source}
+				ORDER BY a."createdAt" DESC, a."id" LIMIT ${bind(limit)} OFFSET ${bind((page - 1) * limit)}`,
+				parameters
 			),
-			this.rows<{ total: string }>(`SELECT COUNT(*) AS total FROM "adminAuditLog"`),
+			this.rows<{ total: string }>(`SELECT COUNT(*) AS total ${source}`, filterParameters),
 		]);
 		return {
 			entries: entries.map((r) => ({
