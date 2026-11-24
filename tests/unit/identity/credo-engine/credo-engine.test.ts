@@ -574,14 +574,7 @@ describe('updateDid, deactivateDid, createResource (own DID)', () => {
 });
 
 describe('methods another agent will build', () => {
-	const methods = [
-		'importKey',
-		'importDid',
-		'exportDid',
-		'broadcastStatusList2021',
-		'broadcastBitstringStatusList',
-		'remunerateStatusList2021',
-	];
+	const methods = ['broadcastStatusList2021', 'broadcastBitstringStatusList', 'remunerateStatusList2021'];
 
 	it.each(methods)('%s rejects with NotImplementedByEngine naming the method', async (method) => {
 		const { engine } = harness();
@@ -597,6 +590,10 @@ describe('methods another agent will build', () => {
 		const built = [
 			'createKey',
 			'deleteUnusedKey',
+			// import and export (tests in import-export.test.ts)
+			'importKey',
+			'importDid',
+			'exportDid',
 			'getKey',
 			'createDid',
 			'updateDid',
@@ -648,6 +645,7 @@ describe('methods another agent will build', () => {
 					'assertPublicKeysOwned',
 					'linkSigningKeys',
 					'assertRecordedKeysOwned',
+					'storeImportedKey',
 				].includes(name)
 		);
 		expect(proto.sort()).toEqual([...built, ...methods].sort());

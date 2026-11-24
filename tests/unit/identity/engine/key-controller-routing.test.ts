@@ -132,3 +132,59 @@ describe('POST /key/create engine selection', () => {
 		expect(response.body).toEqual({ error: 'Internal error: boom' });
 	});
 });
+
+async function postImport(body: Record<string, unknown>) {
+	const request = { query: {}, body, params: {} } as unknown as Request;
+	const response = {
+		locals: { customer, user: {} },
+		statusCode: 0,
+		body: undefined as unknown,
+	} as unknown as Response & {
+		statusCode: number;
+		body: unknown;
+	};
+	response.status = ((code: number) => ((response.statusCode = code), response)) as never;
+	response.json = ((body: unknown) => ((response.body = body), response)) as never;
+	await new KeyController().importKey(request, response);
+	return response;
+}
+
+describe('POST /key/import engine selection', () => {
+	// Not a real key: the engines are fakes and never read it
+	const privateKeyHex = 'ab'.repeat(32);
+
+	it('sends an imported key (and the default type) to Credo, never to Veramo', async () => {
+		for (const body of [{ type: 'Ed25519', privateKeyHex, alias: 'a' }, { privateKeyHex }]) {
+			const response = await postImport(body);
+			expect(response.statusCode).toBe(200);
+		}
+		expect(credo.importKey).toHaveBeenNthCalledWith(1, 'Ed25519', privateKeyHex, customer, 'a');
+		expect(credo.importKey).toHaveBeenNthCalledWith(2, 'Ed25519', privateKeyHex, customer, undefined);
+		expect(veramo.importKey).not.toHaveBeenCalled();
+	});
+
+	it('gives a key imported by Credo the same response as Veramo', async () => {
+		const response = await postImport({ type: 'Ed25519', privateKeyHex });
+		expect(JSON.parse(JSON.stringify(response.body))).toEqual(
+			JSON.parse(JSON.stringify(veramoKey('Ed25519', 'credo-Ed25519')))
+		);
+	});
+
+	it('answers 501 NotSupported for a key type the engine cannot hold, and 404 for a key another customer holds', async () => {
+		const { CredoNotSupportedError, CredoOwnershipError } =
+			await import('../../../../src/services/identity/engine/credo/errors.js');
+		credo.importKey.mockImplementationOnce(async () => {
+			throw new CredoNotSupportedError("importing keys of type 'Bls12381G2'");
+		});
+		const unsupported = await postImport({ type: 'Bls12381G2', privateKeyHex });
+		expect(unsupported.statusCode).toBe(501);
+		expect(unsupported.body).toMatchObject({ code: 'NotSupported' });
+
+		credo.importKey.mockImplementationOnce(async () => {
+			throw new CredoOwnershipError('Key abc');
+		});
+		const taken = await postImport({ type: 'Ed25519', privateKeyHex });
+		expect(taken.statusCode).toBe(404);
+		expect(taken.body).toEqual({ error: 'Key abc not found in wallet', code: 'not_found' });
+	});
+});

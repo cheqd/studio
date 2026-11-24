@@ -27,7 +27,7 @@ import { createStatusListSession } from './status-lists-session.js';
 import { type AskarBindings, loadAskar } from './askar-native.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
 import type { CredoStorageConfig } from './config.js';
-import { CredoConfigurationError } from './errors.js';
+import { CredoConfigurationError, CredoKeyExistsError } from './errors.js';
 import type { PayerRequest, ResolvedPayer } from './payer.js';
 
 export interface CredoRuntimeOptions {
@@ -166,8 +166,16 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 			const result = await tenantAgent.modules.cheqd.createResource(did, resource);
 			return { state: result.resourceState.state, reason: result.resourceState.reason };
 		},
+		async importDid({ did, didDocument, keys }) {
+			await tenantAgent.dids.import({ did, didDocument: toCredoDocument(didDocument), keys, overwrite: true });
+		},
 		async importKey(privateJwk, keyId) {
-			await tenantAgent.kms.importKey({ privateJwk: { ...privateJwk, kid: keyId } });
+			try {
+				await tenantAgent.kms.importKey({ privateJwk: { ...privateJwk, kid: keyId } });
+			} catch (error) {
+				if (error instanceof Kms.KeyManagementKeyExistsError) throw new CredoKeyExistsError(keyId);
+				throw error;
+			}
 		},
 		async deleteKey(keyId) {
 			await tenantAgent.kms.deleteKey({ keyId });
