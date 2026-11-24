@@ -16,6 +16,7 @@ declare global {
 			RESOLVER_URL: string;
 			APPLICATION_BASE_URL: string | 'http://localhost:3000';
 			CORS_ALLOWED_ORIGINS: string | APPLICATION_BASE_URL;
+			PROVIDER_ENDPOINT_ALLOWED_HOSTS?: string;
 			ENABLE_EXTERNAL_DB: string | 'false';
 			EXTERNAL_DB_CONNECTION_URL: string;
 			EXTERNAL_DB_ENCRYPTION_KEY: string;
