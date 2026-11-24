@@ -605,18 +605,24 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			{
 				accounts0: '10',
 				gap0: null,
-				accounts1: '6',
-				gap1: '120.4',
-				accounts2: '3',
-				gap2: '3600',
-				accounts3: '0',
-				gap3: null,
+				accounts1: '9',
+				gap1: '30',
+				accounts2: '8',
+				gap2: '60.6',
+				accounts3: '6',
+				gap3: '120.4',
+				accounts4: '3',
+				gap4: '3600',
+				accounts5: '0',
+				gap5: null,
 			},
 		]);
 		const funnel = await service.funnel('first-credential', 30, 'agents');
 		expect(funnel.journey).toBe('first-credential');
 		expect(funnel.steps).toEqual([
 			{ key: 'signed-up', label: 'Signed up', accounts: 10, medianSecondsFromPrevious: null },
+			{ key: 'first-api-key', label: 'First API key', accounts: 9, medianSecondsFromPrevious: 30 },
+			{ key: 'first-api-call', label: 'First API call', accounts: 8, medianSecondsFromPrevious: 61 },
 			{ key: 'funded', label: 'Funded address', accounts: 6, medianSecondsFromPrevious: 120 },
 			{ key: 'first-did', label: 'First DID created', accounts: 3, medianSecondsFromPrevious: 3600 },
 			{ key: 'first-credential', label: 'First credential issued', accounts: 0, medianSecondsFromPrevious: null },
@@ -624,11 +630,27 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		const agent = await serviceWith(() => [{}]).service.funnel('first-agent', 7, 'all');
 		expect(agent.steps.map((s) => s.key)).toEqual([
 			'signed-up',
+			'first-api-key',
+			'first-api-call',
 			'funded',
 			'first-did',
 			'registered-agent',
 			'card-signed',
 		]);
+	});
+
+	it('first API key counts any apiKey row (revoked too); first API call comes from customerActivation (U-34)', async () => {
+		const { service, statements } = serviceWith(() => [{}]);
+		await service.funnel('first-agent', 30, 'all');
+		expect(statements[0]).toContain(
+			'SELECT ak."customerId", MIN(ak."createdAt") AS at FROM "apiKey" ak\n\t\tWHERE ak."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ak."customerId"'
+		);
+		expect(statements[0]).not.toMatch(/ak\."revoked"/);
+		expect(statements[0]).toContain('ca."firstApiCallAt" AS apicall');
+		// step 1 is reached with sign-up and key, step 2 adds the call
+		expect(statements[0]).toContain(
+			'COUNT(*) FILTER (WHERE j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL) AS "accounts2"'
+		);
 	});
 
 	it('audit entries expose the customer id as target and never a customer name or email', async () => {

@@ -69,7 +69,8 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 		const { service, calls } = serviceWith((sql) => (sql.includes('COUNT(*) AS total') ? [{ total: '0' }] : []));
 		await service.stalledAccounts('first-agent', 'registered-agent', 90, 'people', 3, 10);
 		const [page, total] = calls;
-		const stalled = 'j.signed IS NOT NULL AND j.funded IS NOT NULL AND j.did IS NOT NULL AND j.agent IS NULL';
+		const stalled =
+			'j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL AND j.funded IS NOT NULL AND j.did IS NOT NULL AND j.agent IS NULL';
 		expect(page.sql).toContain(`WHERE ${stalled} ORDER BY j.signed DESC, j."customerId" LIMIT $3 OFFSET $4`);
 		expect(page.parameters).toEqual([90, 'people', 10, 20]);
 		expect(total.sql).toContain(`SELECT COUNT(*) AS total FROM j WHERE ${stalled}`);
@@ -78,10 +79,10 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 		for (const { sql } of calls) expect(sql).not.toMatch(/c\."(name|email)"/);
 	});
 
-	it('the first step after sign-up stalls on funding only', async () => {
+	it('the first step after sign-up stalls on the API key only', async () => {
 		const { service, calls } = serviceWith(() => []);
-		await service.stalledAccounts('first-credential', 'funded', 30, 'all', 1, 25);
-		expect(calls[0].sql).toContain('WHERE j.signed IS NOT NULL AND j.funded IS NULL ORDER BY');
+		await service.stalledAccounts('first-credential', 'first-api-key', 30, 'all', 1, 25);
+		expect(calls[0].sql).toContain('WHERE j.signed IS NOT NULL AND j.apikey IS NULL ORDER BY');
 	});
 
 	it('uses the same cohort as the funnel, so total = previous accounts minus this step accounts', async () => {
@@ -108,7 +109,15 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 describe('stalled step keys and references', () => {
 	it('lists every step after the first, once', () => {
 		expect(STALLED_STEP_KEYS.sort()).toEqual(
-			['card-signed', 'first-credential', 'first-did', 'funded', 'registered-agent'].sort()
+			[
+				'card-signed',
+				'first-api-call',
+				'first-api-key',
+				'first-credential',
+				'first-did',
+				'funded',
+				'registered-agent',
+			].sort()
 		);
 		for (const steps of Object.values(JOURNEY_STEPS)) expect(steps[0].key).toBe('signed-up');
 	});
