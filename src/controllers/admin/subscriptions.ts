@@ -430,15 +430,15 @@ export class SubscriptionController {
 	@syncCustomer
 	public async list(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const paymentProviderId = response.locals.customer.paymentProviderId;
+		const paymentProviderId = response.locals.customer?.paymentProviderId;
+		// Always scoped to the caller's own Stripe customer: without one there is nothing to list
+		if (!paymentProviderId) {
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: `Subscriptions were not found`,
+			} satisfies SubscriptionListUnsuccessfulResponseBody);
+		}
 		try {
 			// Get the subscriptions
-			// A caller without a Stripe customer has no subscriptions: never list without a customer filter.
-			if (!paymentProviderId) {
-				return response.status(StatusCodes.OK).json({
-					subscriptions: { object: 'list', data: [], has_more: false, url: '/v1/subscriptions' },
-				} as unknown as SubscriptionListResponseBody);
-			}
 			const subscriptions = await stripe.subscriptions.list({
 				customer: paymentProviderId as string,
 			});
@@ -514,7 +514,7 @@ export class SubscriptionController {
 	 * @openapi
 	 *
 	 * /admin/subscription/cancel:
-	 *  post:
+	 *  delete:
 	 *    summary: Cancel a subscription
 	 *    description: Cancels an existing subscription
 	 *    tags: [Subscription]

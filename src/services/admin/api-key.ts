@@ -1,4 +1,5 @@
 import type { FindOptionsOrder, FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import { MoreThan } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIServiceOptions } from '../../types/admin.js';
@@ -80,6 +81,13 @@ export class APIKeyService {
 			apiKeyEntity.apiKey = apiKey;
 		}
 		return apiKeyEntity;
+	}
+
+	/** How many keys of this customer are usable now: not revoked and not yet expired. */
+	public async countActive(customer: CustomerEntity, now: Date = new Date()): Promise<number> {
+		return await this.apiKeyRepository.count({
+			where: { customer: { customerId: customer.customerId }, revoked: false, expiresAt: MoreThan(now) },
+		});
 	}
 
 	public async update(

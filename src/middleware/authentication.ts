@@ -2,28 +2,14 @@ import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
-import { AccountAuthProvider } from './auth/routes/api/account-auth.js';
-import { KeyAuthProvider } from './auth/routes/api/key-auth.js';
 import { LogToHelper } from './auth/logto-helper.js';
 import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
-import { FlagsAuthRuleProvider } from './auth/routes/api/flags-auth.js';
-import { AdminAuthRuleProvider } from './auth/routes/admin/admin-auth.js';
 import { APIGuard } from './auth/auth-gaurd.js';
-import { AuthRuleRepository } from './auth/routes/auth-rule-repository.js';
+import { createAuthRuleRepository } from './auth/routes/auth-rules.js';
 import type { IOAuthProvider } from './auth/oauth/abstract.js';
-import { DidAuthRuleProvider } from './auth/routes/api/did-auth.js';
-import { PresentationAuthRuleProvider } from './auth/routes/api/presentation-auth.js';
-import { ResourceAuthRuleProvider } from './auth/routes/api/resource-auth.js';
-import { CredentialAuthRuleProvider } from './auth/routes/api/credential-auth.js';
-import { CredentialStatusAuthRuleProvider } from './auth/routes/api/credential-status-auth.js';
-import { AuthInfoProvider } from './auth/routes/api/auth-user-info.js';
 import type { UnsuccessfulResponseBody } from '../types/shared.js';
-import { AccreditationAuthRuleProvider } from './auth/routes/api/accreditation-auth.js';
-import { AgentAuthRuleProvider } from './auth/routes/api/agent-auth.js';
-import { EventAuthRuleProvider } from './auth/routes/api/event-auth.js';
-import { ProvidersAuthRuleProvider } from './auth/routes/api/provider-auth.js';
 
 dotenv.config();
 
@@ -37,25 +23,7 @@ export class Authentication {
 
 	constructor() {
 		this.oauthProvider = new LogToProvider();
-		const authRuleRepository = new AuthRuleRepository();
-
-		authRuleRepository.push(new AuthInfoProvider());
-
-		authRuleRepository.push(new AccountAuthProvider());
-		authRuleRepository.push(new KeyAuthProvider());
-
-		authRuleRepository.push(new DidAuthRuleProvider());
-		authRuleRepository.push(new ResourceAuthRuleProvider());
-		authRuleRepository.push(new CredentialAuthRuleProvider());
-		authRuleRepository.push(new CredentialStatusAuthRuleProvider());
-		authRuleRepository.push(new PresentationAuthRuleProvider());
-		authRuleRepository.push(new AccreditationAuthRuleProvider());
-		authRuleRepository.push(new EventAuthRuleProvider());
-		authRuleRepository.push(new AgentAuthRuleProvider());
-
-		authRuleRepository.push(new FlagsAuthRuleProvider());
-		authRuleRepository.push(new AdminAuthRuleProvider());
-		authRuleRepository.push(new ProvidersAuthRuleProvider());
+		const authRuleRepository = createAuthRuleRepository();
 
 		this.apiGuardian = new APIGuard(authRuleRepository, this.oauthProvider);
 		// Initial auth handler

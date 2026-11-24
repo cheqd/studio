@@ -23,7 +23,7 @@ import type {
 	APIServiceOptions,
 } from '../../types/admin.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
-import { OperationNameEnum } from '../../types/constants.js';
+import { API_KEY_MAX_ACTIVE_PER_CUSTOMER, OperationNameEnum } from '../../types/constants.js';
 
 dotenv.config();
 
@@ -114,6 +114,8 @@ export class APIKeyController {
 	 *         $ref: '#/components/schemas/APIKeyCreateUnsuccessfulResponseBody'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The account already holds the maximum number of active API keys (API_KEY_MAX_ACTIVE_PER_CUSTOMER, default 10). Revoke one first.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -123,6 +125,13 @@ export class APIKeyController {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 
 		try {
+			// Cap how many live keys one customer can hold, so a retry loop or a misused token cannot pile them up
+			const activeKeys = await APIKeyService.instance.countActive(response.locals.customer);
+			if (activeKeys >= API_KEY_MAX_ACTIVE_PER_CUSTOMER) {
+				return response.status(StatusCodes.CONFLICT).json({
+					error: `API key limit reached: an account can hold at most ${API_KEY_MAX_ACTIVE_PER_CUSTOMER} active API keys. Revoke a key you no longer use, then try again.`,
+				} satisfies APIKeyCreateUnsuccessfulResponseBody);
+			}
 			const apiKey = await APIKeyService.generateAPIKey(response.locals.user.logToId as string);
 			const apiKeyEntity = await APIKeyService.instance.create(
 				apiKey,
@@ -239,7 +248,7 @@ export class APIKeyController {
 	 * @openapi
 	 *
 	 * /admin/api-key/revoke:
-	 *  post:
+	 *  delete:
 	 *   summary: Revoke an existing API key
 	 *   description: Revoke an existing API key
 	 *   tags: [API Key]
