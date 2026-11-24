@@ -832,6 +832,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				created: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -956,6 +957,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				created: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1052,6 +1054,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				updated: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1148,6 +1151,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				updated: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}

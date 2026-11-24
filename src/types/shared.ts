@@ -58,6 +58,8 @@ export interface IErrorResponse {
 
 export type UnsuccessfulResponseBody = {
 	error: string;
+	/** Stable machine-readable code, where the route has one (for example a failed ledger write, U-30). */
+	code?: string;
 };
 
 export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody;

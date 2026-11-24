@@ -49,6 +49,7 @@ import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { ledgerErrorCode, recordFailedLedgerWrite } from '../../helpers/ledger-write-failure.js';
 import { engineErrorResponse } from '../../helpers/engine-errors.js';
 import { respondWithEncryptedExport } from '../../helpers/key-export.js';
 
@@ -377,17 +378,28 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.DID,
+					name: OperationNameEnum.DID_CREATE,
+					customer: response.locals.customer,
+					network,
+				},
+				error
+			);
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
 					error: unfunded.error,
+					code: unfunded.code,
 				} satisfies UnsuccessfulCreateDidResponseBody);
 			}
 
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			} satisfies UnsuccessfulCreateDidResponseBody);
 		}
 	}
@@ -525,6 +537,15 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.DID,
+					name: OperationNameEnum.DID_UPDATE,
+					customer: response.locals.customer,
+					did,
+				},
+				error
+			);
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			if (error instanceof OwnershipError) {
@@ -546,11 +567,13 @@ export class DIDController {
 			if (unfunded) {
 				return response.status(unfunded.status).json({
 					error: unfunded.error,
+					code: unfunded.code,
 				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			} satisfies UnsuccessfulUpdateDidResponseBody);
 		}
 	}
@@ -816,6 +839,15 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.DID,
+					name: OperationNameEnum.DID_DEACTIVATE,
+					customer: response.locals.customer,
+					did,
+				},
+				error
+			);
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			if (error instanceof OwnershipError) {
@@ -825,11 +857,13 @@ export class DIDController {
 			if (unfunded) {
 				return response.status(unfunded.status).json({
 					error: unfunded.error,
+					code: unfunded.code,
 				} satisfies UnsuccessfulDeactivateDidResponseBody);
 			}
 
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			} satisfies UnsuccessfulDeactivateDidResponseBody);
 		}
 	}

@@ -26,6 +26,18 @@ export class CustomerActivationEntity {
 	@Column({ type: 'timestamptz', nullable: true })
 	firstStatusListCreatedAt?: Date;
 
+	/** First API key the customer created itself (`POST /admin/api-key/create`), not a session key (U-35). */
+	@Column({ type: 'timestamptz', nullable: true })
+	firstApiKeyCreatedAt?: Date;
+
+	/** First faucet request that credited the account (U-35). */
+	@Column({ type: 'timestamptz', nullable: true })
+	firstFaucetRequestAt?: Date;
+
+	/** First tracked operation of any kind (U-35). */
+	@Column({ type: 'timestamptz', nullable: true })
+	firstApiCallAt?: Date;
+
 	@CreateDateColumn({ type: 'timestamptz' })
 	createdAt!: Date;
 

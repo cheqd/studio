@@ -459,6 +459,11 @@ class App {
 			AnalyticsAdminController.funnelsValidator,
 			analyticsAdmin.funnels.bind(analyticsAdmin)
 		);
+		app.get(
+			'/admin/analytics/funnels/stalled',
+			AnalyticsAdminController.stalledValidator,
+			analyticsAdmin.stalled.bind(analyticsAdmin)
+		);
 		app.get('/admin/audit-log', AuditLogAdminController.listValidator, auditAdmin.list.bind(auditAdmin));
 
 		// LogTo user info

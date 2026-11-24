@@ -8,6 +8,8 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 
 @Entity('adminAuditLog')
 @Index('IDX_adminAuditLog_targetCustomerId', ['targetCustomerId'])
 @Index('IDX_adminAuditLog_createdAt', ['createdAt'])
+@Index('IDX_adminAuditLog_action_createdAt', ['action', 'createdAt'])
+@Index('IDX_adminAuditLog_actorUserId_createdAt', ['actorUserId', 'createdAt'])
 export class AdminAuditLogEntity {
 	@PrimaryGeneratedColumn('uuid')
 	id!: string;

@@ -10438,7 +10438,7 @@
           "Event"
         ],
         "summary": "Fetch Credential event's triggered by the user.",
-        "description": "This endpoint returns the list of Credential Events controlled by the account.",
+        "description": "This endpoint returns the list of Credential Events controlled by the account, newest first (by `createdAt`, then by id). Use `successful=false` to list failed operations only, including failed ledger writes, which carry an `errorCategory` (`insufficient_funds`, `out_of_gas`, `ledger_unavailable`, `rejected` or `other`).",
         "parameters": [
           {
             "in": "query",

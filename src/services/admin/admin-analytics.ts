@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Connection } from '../../database/connection/connection.js';
 import type { Table, Tile, Unsupported } from '../analytics/customer-analytics.js';
 import { ledgerIndexerConfig } from '../ledger/ledger-indexer.js';
@@ -16,7 +17,7 @@ export const RANGES = [7, 30, 90] as const;
 export type Range = (typeof RANGES)[number];
 export const SEGMENTS = ['agents', 'people', 'unclassified', 'all'] as const;
 export type Segment = (typeof SEGMENTS)[number];
-export const JOURNEYS = ['first-credential', 'first-agent'] as const;
+export const JOURNEYS = ['first-credential', 'first-agent', 'first-api-call'] as const;
 export type Journey = (typeof JOURNEYS)[number];
 
 export const DEFAULT_PAGE_LIMIT = 25;
@@ -61,10 +62,28 @@ export interface CustomerSummary {
 	status: 'active' | 'inactive';
 	usage: CustomerUsage;
 }
+/**
+ * When the customer first reached each milestone (ISO 8601), or null if it has not yet (U-35). Dates from before a
+ * milestone was recorded come from a backfill over existing data (see the `customerActivation` migrations).
+ */
+export interface CustomerMilestones {
+	/** First DID created (through the API, or for an agent). */
+	firstIdentifierAt: string | null;
+	firstAgentAt: string | null;
+	/** First API key the customer created itself; portal session keys do not count. */
+	firstApiKeyAt: string | null;
+	firstCredentialIssuedAt: string | null;
+	firstStatusListAt: string | null;
+	/** First faucet request that credited the account. */
+	firstFaucetRequestAt: string | null;
+	/** First tracked operation of any kind. */
+	firstApiCallAt: string | null;
+}
 export interface CustomerDetail extends CustomerSummary {
 	paymentPlan: string;
 	agentCount: number;
 	segment: Exclude<Segment, 'all'>;
+	milestones: CustomerMilestones;
 }
 
 const num = (value: unknown): number => Number(value ?? 0);
@@ -87,12 +106,66 @@ const SEGMENT_CTE = `seg AS (
 const segmentFilter = (column: string) =>
 	`($2 = 'all' OR ${column} IN (SELECT "customerId" FROM seg WHERE segment = $2))`;
 
-/** Window: whole UTC days, so the per-day series and the totals agree. `start` is a timestamptz. */
+/**
+ * Window: whole UTC days, so the per-day series and the totals agree. `$1` is a text array `[start, stop]` of ISO
+ * instants from `analyticsWindow`: rows count when `start <= t < stop`. A null start (`range=all`) means from the UTC
+ * day of the first sign-up. `start_day` and `end_day` are the first and last UTC days, for the per-day series.
+ */
 const WINDOW_CTE = `win AS (
-	SELECT (date_trunc('day', now() AT TIME ZONE 'UTC') - (($1::int - 1) * interval '1 day')) AT TIME ZONE 'UTC' AS start,
-		date_trunc('day', now() AT TIME ZONE 'UTC') - (($1::int - 1) * interval '1 day') AS start_day,
-		date_trunc('day', now() AT TIME ZONE 'UTC') AS end_day
+	SELECT w.start, w.stop, w.start AT TIME ZONE 'UTC' AS start_day, (w.stop AT TIME ZONE 'UTC') - interval '1 day' AS end_day
+	FROM (
+		SELECT COALESCE(
+				($1::text[])[1]::timestamptz,
+				(SELECT date_trunc('day', MIN(c0."createdAt") AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' FROM "customer" c0),
+				date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+			) AS start,
+			($1::text[])[2]::timestamptz AS stop
+	) w
 )`;
+
+/** Longest custom `from`/`to` span, in days (both ends included). */
+export const MAX_CUSTOM_RANGE_DAYS = 400;
+
+/** What a staff analytics route was asked for: a preset number of days, every day since the first sign-up, or dates. */
+export type WindowSpec = Range | 'all' | { from: string; to: string };
+
+/** A resolved window. `from` and `to` are UTC dates (`to` included); `from` is null for `all` (first sign-up). */
+export interface AnalyticsWindow {
+	range: Range | 'all' | 'custom';
+	from: string | null;
+	to: string;
+	/** `$1` of every windowed statement: `[start ISO or null, stop ISO]`, stop exclusive. */
+	parameter: [string | null, string];
+}
+
+const DAY_MS = 86_400_000;
+const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/** Resolves a window spec against today (UTC). Presets end today, inclusive, as before. */
+export function analyticsWindow(spec: WindowSpec, now: Date = new Date()): AnalyticsWindow {
+	const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+	if (typeof spec === 'object') {
+		const from = Date.parse(`${spec.from}T00:00:00Z`);
+		const stop = Date.parse(`${spec.to}T00:00:00Z`) + DAY_MS;
+		return {
+			range: 'custom',
+			from: spec.from,
+			to: spec.to,
+			parameter: [new Date(from).toISOString(), new Date(stop).toISOString()],
+		};
+	}
+	const stop = today + DAY_MS;
+	if (spec === 'all') {
+		return { range: 'all', from: null, to: isoDay(today), parameter: [null, new Date(stop).toISOString()] };
+	}
+	const start = today - (spec - 1) * DAY_MS;
+	return {
+		range: spec,
+		from: isoDay(start),
+		to: isoDay(today),
+		parameter: [new Date(start).toISOString(), new Date(stop).toISOString()],
+	};
+}
 
 const PLAN_EXPR = `COALESCE((SELECT NULLIF(NULLIF(r."name", ''), 'default') FROM "user" u JOIN "role" r ON r."roleTypeId" = u."roleTypeId" WHERE u."customerId" = c."customerId" ORDER BY u."createdAt" LIMIT 1), 'none')`;
 
@@ -140,6 +213,129 @@ const STATUS_LIST_WRITES = [
 ];
 const RESOURCE_WRITES = ['resource-create'];
 const FAUCET_WRITE_OPERATIONS = [...DID_WRITES, ...STATUS_LIST_WRITES, ...RESOURCE_WRITES];
+
+interface JourneyStep {
+	key: string;
+	label: string;
+	/** Column of the `j` row (see JOURNEY_CTES) holding the time the step was reached. */
+	column: string;
+}
+
+/** The steps of each journey, in order. Step keys are part of the API (`step` of the stalled-accounts route). */
+export const JOURNEY_STEPS: Record<Journey, readonly JourneyStep[]> = {
+	'first-credential': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
+		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
+		{ key: 'first-credential', label: 'First credential issued', column: 'j.credential' },
+	],
+	'first-agent': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
+		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
+		{ key: 'registered-agent', label: 'Registered an agent', column: 'j.agent' },
+		{ key: 'card-signed', label: 'Agent card signed', column: 'j.card' },
+	],
+	// Studio API adoption, apart from the ledger journeys: SDK users may never call the Studio API (U-34)
+	'first-api-call': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'first-api-key', label: 'First API key', column: 'j.apikey' },
+		{ key: 'first-api-call', label: 'First API call', column: 'j.apicall' },
+	],
+};
+
+const journeySteps = (journey: Journey): readonly JourneyStep[] => JOURNEY_STEPS[journey];
+
+/** Every step key that can be asked for as a stalled step (any journey, not the first step). */
+export const STALLED_STEP_KEYS = [
+	...new Set(Object.values(JOURNEY_STEPS).flatMap((steps) => steps.slice(1).map((s) => s.key))),
+];
+
+/** SQL condition: steps 0..i all reached. */
+const reachedCondition = (steps: readonly JourneyStep[], i: number): string =>
+	steps
+		.slice(0, i + 1)
+		.map((s) => `${s.column} IS NOT NULL`)
+		.join(' AND ');
+
+/**
+ * One row `j` per customer of the funnel cohort (signed up in the range `$1`, in the segment `$2`) with the time it
+ * reached each step, or null.
+ */
+const JOURNEY_CTES = `${WINDOW_CTE}, ${SEGMENT_CTE},
+	cohort AS (
+		SELECT c."customerId", c."createdAt" AS signed FROM "customer" c, win
+		WHERE c."createdAt" >= win.start AND c."createdAt" < win.stop AND ${segmentFilter('c."customerId"')}
+	),
+	funded AS (
+		SELECT fr."customerId", MIN(fr."createdAt") AS at FROM "faucetRequest" fr
+		WHERE fr."status" = 'completed' AND fr."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY fr."customerId"
+	),
+	cards AS (
+		SELECT ac."customerId", MIN(ac."createdAt") AS at FROM "agentCard" ac
+		WHERE ac."jws" IS NOT NULL AND ac."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ac."customerId"
+	),
+	j AS (
+		SELECT cohort."customerId", cohort.signed, ca."firstApiKeyCreatedAt" AS apikey, ca."firstApiCallAt" AS apicall,
+			funded.at AS funded, ca."firstDidCreatedAt" AS did,
+			ca."firstCredentialIssuedAt" AS credential, ca."firstAgentRegisteredAt" AS agent, cards.at AS card
+		FROM cohort
+		LEFT JOIN funded ON funded."customerId" = cohort."customerId"
+		LEFT JOIN "customerActivation" ca ON ca."customerId" = cohort."customerId"
+		LEFT JOIN cards ON cards."customerId" = cohort."customerId"
+	)`;
+
+/**
+ * A short reference for an account in an anonymised list: the first 12 hex characters of a SHA-256 of the customer
+ * id under a fixed label. Stable, so the same account has the same reference on every page and call. It does not
+ * contain the id and cannot be turned back into it; only someone who already holds the id can match the two.
+ */
+export function opaqueAccountRef(customerId: string): string {
+	return `acct_${createHash('sha256').update(`studio:stalled-account:${customerId}`).digest('hex').slice(0, 12)}`;
+}
+
+/** Optional filters of the staff audit log (U-43). Dates are UTC days, YYYY-MM-DD, both included. */
+export interface AuditLogFilter {
+	action?: string;
+	actor?: string;
+	targetCustomerId?: string;
+	q?: string;
+	from?: string;
+	to?: string;
+}
+
+export interface FunnelStep {
+	key: string;
+	label: string;
+	accounts: number;
+	medianSecondsFromPrevious: number | null;
+}
+
+export interface StalledAccount {
+	/** Opaque, stable reference; not the customer id. */
+	ref: string;
+	signedUpAt: string;
+	/** Last tracked operation, or null if none. */
+	lastActiveAt: string | null;
+}
+export interface StalledAccounts {
+	journey: Journey;
+	step: string;
+	stepLabel: string;
+	previousStep: string;
+	previousStepLabel: string;
+	range: AnalyticsWindow['range'];
+	/** First UTC day of the window; null for `all` (from the first sign-up). */
+	from: string | null;
+	/** Last UTC day of the window, included. */
+	to: string;
+	segment: Segment;
+	page: number;
+	limit: number;
+	/** Stalled accounts across all pages. */
+	total: number;
+	accounts: StalledAccount[];
+}
 
 export function routeForOperation(operationName: string): { route: string; method: string } {
 	const known = OPERATION_ROUTES[operationName];
@@ -247,8 +443,12 @@ export class AdminAnalyticsService {
 				(SELECT COUNT(*) FROM "agent" a WHERE a."customerId" = c."customerId" AND a."deletedAt" IS NULL) AS "agentCount"`
 			)})
 			SELECT one.*, ${AdminAnalyticsService.usageColumns('one')},
-				(SELECT segment FROM seg WHERE seg."customerId" = one.id) AS segment
-			FROM one`,
+				(SELECT segment FROM seg WHERE seg."customerId" = one.id) AS segment,
+				ca."firstDidCreatedAt" AS "mIdentifier", ca."firstAgentRegisteredAt" AS "mAgent",
+				ca."firstApiKeyCreatedAt" AS "mApiKey", ca."firstCredentialIssuedAt" AS "mCredential",
+				ca."firstStatusListCreatedAt" AS "mStatusList", ca."firstFaucetRequestAt" AS "mFaucet",
+				ca."firstApiCallAt" AS "mApiCall"
+			FROM one LEFT JOIN "customerActivation" ca ON ca."customerId" = one.id`,
 			[customerId]
 		);
 		if (rows.length === 0) return null;
@@ -258,6 +458,15 @@ export class AdminAnalyticsService {
 			paymentPlan: row.paymentPlan as string,
 			agentCount: num(row.agentCount),
 			segment: row.segment as CustomerDetail['segment'],
+			milestones: {
+				firstIdentifierAt: iso(row.mIdentifier),
+				firstAgentAt: iso(row.mAgent),
+				firstApiKeyAt: iso(row.mApiKey),
+				firstCredentialIssuedAt: iso(row.mCredential),
+				firstStatusListAt: iso(row.mStatusList),
+				firstFaucetRequestAt: iso(row.mFaucet),
+				firstApiCallAt: iso(row.mApiCall),
+			},
 		};
 	}
 
@@ -299,25 +508,26 @@ export class AdminAnalyticsService {
 
 	// --- Analytics -----------------------------------------------------------------------------------------
 
-	async overview(range: Range, segment: Segment) {
-		const parameters = [range, segment];
+	async overview(window: WindowSpec, segment: Segment) {
+		const w = analyticsWindow(window);
+		const parameters = [w.parameter, segment];
 		const [tileRows, signUps, calls] = await Promise.all([
 			this.rows(
 				`WITH ${WINDOW_CTE}, ${SEGMENT_CTE}
 				SELECT
-					(SELECT COUNT(*) FROM "customer" c, win WHERE c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}) AS "signUps",
-					(SELECT COUNT(DISTINCT o."customerId") FROM "operation" o, win WHERE o."createdAt" >= win.start AND o."customerId" IS NOT NULL AND ${segmentFilter('o."customerId"')}) AS "activeAccounts",
-					(SELECT COUNT(*) FROM "customerActivation" ca, win WHERE ca."firstAgentRegisteredAt" >= win.start AND ${segmentFilter('ca."customerId"')}) AS "registeredAnAgent",
-					(SELECT COUNT(*) FROM "customerActivation" ca, win WHERE ca."firstCredentialIssuedAt" >= win.start AND ${segmentFilter('ca."customerId"')}) AS "issuedACredential",
-					(SELECT COUNT(*) FROM "operation" o, win WHERE o."createdAt" >= win.start AND ${segmentFilter('o."customerId"')}) AS "apiCalls",
-					(SELECT COALESCE(SUM(fr."amountNcheq"), 0) / 1000000000 FROM "faucetRequest" fr, win WHERE fr."createdAt" >= win.start AND fr."status" = 'completed' AND ${segmentFilter('fr."customerId"')}) AS "testCheqSent"`,
+					(SELECT COUNT(*) FROM "customer" c, win WHERE c."createdAt" >= win.start AND c."createdAt" < win.stop AND ${segmentFilter('c."customerId"')}) AS "signUps",
+					(SELECT COUNT(DISTINCT o."customerId") FROM "operation" o, win WHERE o."createdAt" >= win.start AND o."createdAt" < win.stop AND o."customerId" IS NOT NULL AND ${segmentFilter('o."customerId"')}) AS "activeAccounts",
+					(SELECT COUNT(*) FROM "customerActivation" ca, win WHERE ca."firstAgentRegisteredAt" >= win.start AND ca."firstAgentRegisteredAt" < win.stop AND ${segmentFilter('ca."customerId"')}) AS "registeredAnAgent",
+					(SELECT COUNT(*) FROM "customerActivation" ca, win WHERE ca."firstCredentialIssuedAt" >= win.start AND ca."firstCredentialIssuedAt" < win.stop AND ${segmentFilter('ca."customerId"')}) AS "issuedACredential",
+					(SELECT COUNT(*) FROM "operation" o, win WHERE o."createdAt" >= win.start AND o."createdAt" < win.stop AND ${segmentFilter('o."customerId"')}) AS "apiCalls",
+					(SELECT COALESCE(SUM(fr."amountNcheq"), 0) / 1000000000 FROM "faucetRequest" fr, win WHERE fr."createdAt" >= win.start AND fr."createdAt" < win.stop AND fr."status" = 'completed' AND ${segmentFilter('fr."customerId"')}) AS "testCheqSent"`,
 				parameters
 			),
 			this.rows<{ date: string; count: string }>(
 				`WITH ${WINDOW_CTE}, ${SEGMENT_CTE}
 				SELECT to_char(d.day, 'YYYY-MM-DD') AS date, COUNT(c."customerId") AS count
 				FROM win CROSS JOIN generate_series(win.start_day, win.end_day, interval '1 day') AS d(day)
-				LEFT JOIN "customer" c ON date_trunc('day', c."createdAt" AT TIME ZONE 'UTC') = d.day AND c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}
+				LEFT JOIN "customer" c ON date_trunc('day', c."createdAt" AT TIME ZONE 'UTC') = d.day AND c."createdAt" >= win.start AND c."createdAt" < win.stop AND ${segmentFilter('c."customerId"')}
 				GROUP BY d.day ORDER BY d.day`,
 				parameters
 			),
@@ -325,7 +535,7 @@ export class AdminAnalyticsService {
 				`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
 				per_day AS (
 					SELECT date_trunc('day', o."createdAt" AT TIME ZONE 'UTC') AS day, COUNT(*) AS count
-					FROM "operation" o, win WHERE o."createdAt" >= win.start AND ${segmentFilter('o."customerId"')}
+					FROM "operation" o, win WHERE o."createdAt" >= win.start AND o."createdAt" < win.stop AND ${segmentFilter('o."customerId"')}
 					GROUP BY 1
 				)
 				SELECT to_char(d.day, 'YYYY-MM-DD') AS date, COALESCE(p.count, 0) AS count
@@ -356,16 +566,17 @@ export class AdminAnalyticsService {
 	 * credentials, status lists, keys, presentations, accounts), not for every HTTP request, so `calls` counts those.
 	 * A call failed when `successful` is false or `outcome` is `error`. `avgMs` is 0 where no duration was recorded.
 	 */
-	async endpoints(range: Range, segment: Segment) {
+	async endpoints(window: WindowSpec, segment: Segment) {
+		const w = analyticsWindow(window);
 		const rows = await this.rows(
 			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE}
 			SELECT o."operationName" AS name, COUNT(*) AS calls,
 				COUNT(*) FILTER (WHERE NOT o."successful" OR o."outcome" = 'error') AS failed,
 				AVG(o."durationMs") AS "avgMs"
 			FROM "operation" o, win
-			WHERE o."createdAt" >= win.start AND ${segmentFilter('o."customerId"')}
+			WHERE o."createdAt" >= win.start AND o."createdAt" < win.stop AND ${segmentFilter('o."customerId"')}
 			GROUP BY o."operationName" ORDER BY calls DESC, name LIMIT 100`,
-			[range, segment]
+			[w.parameter, segment]
 		);
 		return rows.map((r) => {
 			const calls = num(r.calls);
@@ -378,14 +589,15 @@ export class AdminAnalyticsService {
 		});
 	}
 
-	async topAccounts(range: Range, segment: Segment, limit: number) {
+	async topAccounts(window: WindowSpec, segment: Segment, limit: number) {
+		const w = analyticsWindow(window);
 		const rows = await this.rows(
 			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE}
 			SELECT c."customerId" AS "customerId", c."name", ${PLAN_EXPR} AS plan, COUNT(*) AS calls
 			FROM "operation" o JOIN "customer" c ON c."customerId" = o."customerId", win
-			WHERE o."createdAt" >= win.start AND ${segmentFilter('o."customerId"')}
+			WHERE o."createdAt" >= win.start AND o."createdAt" < win.stop AND ${segmentFilter('o."customerId"')}
 			GROUP BY c."customerId", c."name" ORDER BY calls DESC, c."customerId" LIMIT $3`,
-			[range, segment, limit]
+			[w.parameter, segment, limit]
 		);
 		return rows.map((r) => ({
 			customerId: r.customerId as string,
@@ -415,66 +627,28 @@ export class AdminAnalyticsService {
 	 *
 	 * Journey A: signed up, funded address (a completed faucet request), first DID, first credential issued.
 	 * Journey B: signed up, funded address, first DID, registered an agent, agent card signed.
+	 * Journey C (`first-api-call`): signed up, first API key, first API call. First API key is
+	 * `customerActivation.firstApiKeyCreatedAt` (a key the customer created; portal session keys and Studio's own keys
+	 * do not count); first API call is `customerActivation.firstApiCallAt` (the first tracked operation).
 	 * The faucet table keeps a limited history (see FAUCET_REQUEST_RETENTION_MONTHS), so "funded" can undercount for
-	 * very old customers; the ranges here are at most 90 days.
+	 * old customers, which `range=all` and custom dates can now include.
+	 * With `cohort = 'week'` the result also has `cohorts`: the same steps per calendar week of sign-up (UTC, weeks
+	 * start on Monday), oldest first, for the weeks with at least one sign-up in the window.
 	 */
-	async funnel(journey: Journey, range: Range, segment: Segment) {
-		const steps =
-			journey === 'first-credential'
-				? [
-						{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-						{ key: 'funded', label: 'Funded address', column: 'j.funded' },
-						{ key: 'first-did', label: 'First DID created', column: 'j.did' },
-						{ key: 'first-credential', label: 'First credential issued', column: 'j.credential' },
-					]
-				: [
-						{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-						{ key: 'funded', label: 'Funded address', column: 'j.funded' },
-						{ key: 'first-did', label: 'First DID created', column: 'j.did' },
-						{ key: 'registered-agent', label: 'Registered an agent', column: 'j.agent' },
-						{ key: 'card-signed', label: 'Agent card signed', column: 'j.card' },
-					];
+	async funnel(journey: Journey, window: WindowSpec, segment: Segment, cohort?: 'week') {
+		const w = analyticsWindow(window);
+		const steps = journeySteps(journey);
 		// Step i is reached when columns 0..i are all set; its gap is column i minus column i-1
 		const selects = steps.map((step, i) => {
-			const reached = steps
-				.slice(0, i + 1)
-				.map((s) => `${s.column} IS NOT NULL`)
-				.join(' AND ');
+			const reached = reachedCondition(steps, i);
 			const gap =
 				i === 0
 					? 'NULL::float'
 					: `percentile_cont(0.5) WITHIN GROUP (ORDER BY GREATEST(0, EXTRACT(EPOCH FROM (${step.column} - ${steps[i - 1].column})))) FILTER (WHERE ${reached})`;
 			return `COUNT(*) FILTER (WHERE ${reached}) AS "accounts${i}", ${gap} AS "gap${i}"`;
 		});
-		const rows = await this.rows(
-			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
-			cohort AS (
-				SELECT c."customerId", c."createdAt" AS signed FROM "customer" c, win
-				WHERE c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}
-			),
-			funded AS (
-				SELECT fr."customerId", MIN(fr."createdAt") AS at FROM "faucetRequest" fr
-				WHERE fr."status" = 'completed' AND fr."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY fr."customerId"
-			),
-			cards AS (
-				SELECT ac."customerId", MIN(ac."createdAt") AS at FROM "agentCard" ac
-				WHERE ac."jws" IS NOT NULL AND ac."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ac."customerId"
-			),
-			j AS (
-				SELECT cohort.signed, funded.at AS funded, ca."firstDidCreatedAt" AS did, ca."firstCredentialIssuedAt" AS credential,
-					ca."firstAgentRegisteredAt" AS agent, cards.at AS card
-				FROM cohort
-				LEFT JOIN funded ON funded."customerId" = cohort."customerId"
-				LEFT JOIN "customerActivation" ca ON ca."customerId" = cohort."customerId"
-				LEFT JOIN cards ON cards."customerId" = cohort."customerId"
-			)
-			SELECT ${selects.join(', ')} FROM j`,
-			[range, segment]
-		);
-		const row = rows[0] ?? {};
-		return {
-			journey,
-			steps: steps.map((step, i) => ({
+		const shape = (row: Record<string, unknown>): FunnelStep[] =>
+			steps.map((step, i) => ({
 				key: step.key,
 				label: step.label,
 				accounts: num(row[`accounts${i}`]),
@@ -482,6 +656,86 @@ export class AdminAnalyticsService {
 					i === 0 || row[`gap${i}`] === null || row[`gap${i}`] === undefined
 						? null
 						: Math.round(num(row[`gap${i}`])),
+			}));
+		const [rows, weekRows] = await Promise.all([
+			this.rows(`WITH ${JOURNEY_CTES} SELECT ${selects.join(', ')} FROM j`, [w.parameter, segment]),
+			cohort === 'week'
+				? this.rows(
+						`WITH ${JOURNEY_CTES}
+						SELECT to_char(date_trunc('week', j.signed AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS "weekStart", ${selects.join(', ')}
+						FROM j GROUP BY 1 ORDER BY 1`,
+						[w.parameter, segment]
+					)
+				: Promise.resolve([]),
+		]);
+		return {
+			journey,
+			range: w.range,
+			from: w.from,
+			to: w.to,
+			steps: shape(rows[0] ?? {}),
+			...(cohort === 'week'
+				? {
+						cohort,
+						cohorts: weekRows.map((r) => ({ weekStart: r.weekStart as string, steps: shape(r) })),
+					}
+				: {}),
+		};
+	}
+
+	/**
+	 * The accounts that stalled before a funnel step (U-40): in the same cohort as `funnel` (signed up in the range,
+	 * in the segment), they reached every step before `step` but not `step` itself. So for each step but the first,
+	 * `total` here equals the previous step's `accounts` minus this step's `accounts` in `funnel`.
+	 *
+	 * Anonymised: each account is a short opaque reference (a hash of the customer id, stable across calls and pages),
+	 * its sign-up time and its last tracked operation. No id, name or email leaves this
+	 * method. Newest sign-ups first. Returns null when `step` is not a step of the journey after the first.
+	 */
+	async stalledAccounts(
+		journey: Journey,
+		step: string,
+		window: WindowSpec,
+		segment: Segment,
+		page: number,
+		limit: number
+	): Promise<StalledAccounts | null> {
+		const steps = journeySteps(journey);
+		const index = steps.findIndex((s) => s.key === step);
+		if (index < 1) return null;
+		const w = analyticsWindow(window);
+		const stalled = `${reachedCondition(steps, index - 1)} AND ${steps[index].column} IS NULL`;
+		const [pageRows, totalRows] = await Promise.all([
+			this.rows(
+				`WITH ${JOURNEY_CTES},
+				page AS (SELECT j."customerId", j.signed FROM j WHERE ${stalled} ORDER BY j.signed DESC, j."customerId" LIMIT $3 OFFSET $4)
+				SELECT page."customerId", page.signed AS "signedUpAt",
+					(SELECT MAX(o."createdAt") FROM "operation" o WHERE o."customerId" = page."customerId") AS "lastActiveAt"
+				FROM page ORDER BY page.signed DESC, page."customerId"`,
+				[w.parameter, segment, limit, (page - 1) * limit]
+			),
+			this.rows<{ total: string }>(`WITH ${JOURNEY_CTES} SELECT COUNT(*) AS total FROM j WHERE ${stalled}`, [
+				w.parameter,
+				segment,
+			]),
+		]);
+		return {
+			journey,
+			step: steps[index].key,
+			stepLabel: steps[index].label,
+			previousStep: steps[index - 1].key,
+			previousStepLabel: steps[index - 1].label,
+			range: w.range,
+			from: w.from,
+			to: w.to,
+			segment,
+			page,
+			limit,
+			total: num(totalRows[0]?.total),
+			accounts: pageRows.map((r) => ({
+				ref: opaqueAccountRef(r.customerId as string),
+				signedUpAt: iso(r.signedUpAt) as string,
+				lastActiveAt: iso(r.lastActiveAt),
 			})),
 		};
 	}
@@ -491,7 +745,7 @@ export class AdminAnalyticsService {
 	 * disabled, nobody is funded in the range, or too few of the funded addresses have been checked yet (a partial
 	 * picture would read as a real one), so the caller keeps every ledger element unsupported, exactly as before.
 	 */
-	private async ledgerFigures(range: Range, segment: Segment) {
+	private async ledgerFigures(w: AnalyticsWindow, segment: Segment) {
 		const config = this.ledgerConfig();
 		if (!config.enabled) return null;
 		const rows = await this.rows(
@@ -507,7 +761,7 @@ export class AdminAnalyticsService {
 					a."statusListWriteCount" AS lists, a."otherResourceWriteCount" AS other, (a."address" IS NOT NULL) AS checked,
 					EXISTS (SELECT 1 FROM "agent" ag WHERE ag."customerId" = f."customerId") AS journey
 				FROM first f
-				JOIN win ON f.funded_at >= win.start
+				JOIN win ON f.funded_at >= win.start AND f.funded_at < win.stop
 				LEFT JOIN "ledgerAddressActivity" a ON a."address" = f.address
 				WHERE ${segmentFilter('f."customerId"')}
 			)
@@ -527,7 +781,7 @@ export class AdminAnalyticsService {
 				COUNT(*) FILTER (WHERE checked AND writes = 0 AND journey) AS "noWriteJourney",
 				COUNT(*) FILTER (WHERE checked AND writes = 0 AND NOT journey) AS "noWriteNoJourney"
 			FROM cohort`,
-			[range, segment]
+			[w.parameter, segment]
 		);
 		const r = rows[0] ?? {};
 		const funded = num(r.funded);
@@ -547,7 +801,8 @@ export class AdminAnalyticsService {
 	 * payer account (`paymentAccount`), where an address and a customer are the same thing. Anything that needs the
 	 * ledger itself comes back as `{ supported: false, reason }`.
 	 */
-	async faucetToLedger(range: Range, segment: Segment) {
+	async faucetToLedger(window: WindowSpec, segment: Segment) {
+		const w = analyticsWindow(window);
 		const rows = await this.rows(
 			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
 			first AS (
@@ -560,7 +815,7 @@ export class AdminAnalyticsService {
 					EXISTS (SELECT 1 FROM "paymentAccount" pa WHERE pa."address" = f.address AND pa."customerId" = f."customerId") AS own,
 					(SELECT COUNT(*) FROM "faucetRequest" r WHERE r."address" = f.address AND r."status" = 'completed') AS requests
 				FROM first f, win
-				WHERE f.funded_at >= win.start AND ${segmentFilter('f."customerId"')}
+				WHERE f.funded_at >= win.start AND f.funded_at < win.stop AND ${segmentFilter('f."customerId"')}
 			),
 			per_address AS (
 				SELECT c.address, c.own, c.requests, c.funded_at,
@@ -585,10 +840,10 @@ export class AdminAnalyticsService {
 				COUNT(*) FILTER (WHERE first_write - funded_at >= interval '1 day' AND first_write - funded_at < interval '7 days') AS "withinWeek",
 				COUNT(*) FILTER (WHERE first_write - funded_at >= interval '7 days' AND first_write - funded_at < interval '30 days') AS "withinMonth"
 			FROM per_address`,
-			[range, segment, FAUCET_WRITE_OPERATIONS, DID_WRITES, STATUS_LIST_WRITES, RESOURCE_WRITES]
+			[w.parameter, segment, FAUCET_WRITE_OPERATIONS, DID_WRITES, STATUS_LIST_WRITES, RESOURCE_WRITES]
 		);
 		const r = rows[0] ?? {};
-		const indexed = await this.ledgerFigures(range, segment);
+		const indexed = await this.ledgerFigures(w, segment);
 		const L = indexed?.figures ?? null;
 		const ledger = (what: string): Unsupported => ({
 			supported: false,
@@ -688,9 +943,6 @@ export class AdminAnalyticsService {
 					},
 				])
 			: ledger('The ledger writes and Studio journeys table');
-		const days = 86_400_000;
-		const end = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
-		const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 		const unavailable = [
 			...Object.entries(tiles)
 				.filter(([, item]) => !item.supported)
@@ -698,10 +950,10 @@ export class AdminAnalyticsService {
 			...(L ? [] : ['ledgerFunnel', 'ledgerVsStudioJourneys']),
 		];
 		return {
-			range,
+			range: w.range,
 			segment,
-			from: day(end - (range - 1) * days),
-			to: day(end),
+			from: w.from,
+			to: w.to,
 			network: 'testnet' as const,
 			tiles,
 			funnel,
@@ -737,19 +989,47 @@ export class AdminAnalyticsService {
 	 * Staff actions, newest first. `staff` is the acting staff member's Studio email when the actor is a known user,
 	 * otherwise the actor id as recorded. `target` is the customer id (the row outlives the customer); the audit log
 	 * never stores a customer's name or email.
+	 *
+	 * Filters (U-43), all optional and combined with AND: `action` (exact), `actor` (the actor id, or the staff email,
+	 * case-insensitive), `targetCustomerId` (exact), `q` (case-insensitive substring of the reason or the ticket
+	 * reference), `from` and `to` (UTC dates, both included). Every value is a bound parameter.
 	 */
-	async auditLog(page: number, limit: number) {
+	async auditLog(page: number, limit: number, filter: AuditLogFilter = {}) {
+		const clauses: string[] = [];
+		const parameters: unknown[] = [];
+		const bind = (value: unknown) => {
+			parameters.push(value);
+			return `$${parameters.length}`;
+		};
+		if (filter.action) clauses.push(`a."action" = ${bind(filter.action)}`);
+		if (filter.actor) {
+			const actor = bind(filter.actor);
+			clauses.push(`(a."actorUserId" = ${actor} OR lower(sc."email") = lower(${actor}))`);
+		}
+		if (filter.targetCustomerId) clauses.push(`a."targetCustomerId" = ${bind(filter.targetCustomerId)}::uuid`);
+		if (filter.q) {
+			const like = bind(`%${filter.q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`);
+			clauses.push(`(a."reason" ILIKE ${like} OR a."ticketRef" ILIKE ${like})`);
+		}
+		if (filter.from) clauses.push(`a."createdAt" >= ${bind(`${filter.from}T00:00:00Z`)}::timestamptz`);
+		if (filter.to) {
+			clauses.push(`a."createdAt" < (${bind(`${filter.to}T00:00:00Z`)}::timestamptz + interval '1 day')`);
+		}
+		const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+		const source = `FROM "adminAuditLog" a
+				LEFT JOIN "user" su ON su."logToId" = a."actorUserId"
+				LEFT JOIN "customer" sc ON sc."customerId" = su."customerId"
+				${where}`;
+		const filterParameters = [...parameters];
 		const [entries, total] = await Promise.all([
 			this.rows(
 				`SELECT a."id", a."createdAt" AS "when", COALESCE(sc."email", a."actorUserId") AS staff, a."action",
 					a."targetCustomerId" AS target, a."reason", a."ticketRef"
-				FROM "adminAuditLog" a
-				LEFT JOIN "user" su ON su."logToId" = a."actorUserId"
-				LEFT JOIN "customer" sc ON sc."customerId" = su."customerId"
-				ORDER BY a."createdAt" DESC, a."id" LIMIT $1 OFFSET $2`,
-				[limit, (page - 1) * limit]
+				${source}
+				ORDER BY a."createdAt" DESC, a."id" LIMIT ${bind(limit)} OFFSET ${bind((page - 1) * limit)}`,
+				parameters
 			),
-			this.rows<{ total: string }>(`SELECT COUNT(*) AS total FROM "adminAuditLog"`),
+			this.rows<{ total: string }>(`SELECT COUNT(*) AS total ${source}`, filterParameters),
 		]);
 		return {
 			entries: entries.map((r) => ({

@@ -102,6 +102,38 @@ does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/l
       (`read:account` and `admin:analytics:read`). Rollback: `LEDGER_INDEXER_ENABLED=false`; the table and columns can
       stay, or run the migration `down`.
 
+- [ ] Account milestone dates (U-35). The migration `1791702500100` adds three nullable columns to `customerActivation`
+      (`firstApiKeyCreatedAt`, `firstFaucetRequestAt`, `firstApiCallAt`; no default, so no table rewrite) and backfills
+      them in the same step. The backfill reads each customer's earliest `apiKey`, completed `faucetRequest` and
+      `operation` row through the existing per-customer indexes, so it costs one index probe per customer whatever the
+      size of `operation`; it only fills empty columns and is safe to re-run. If it was skipped or interrupted, re-run
+      the statement exported as `BACKFILL_FIRST_MILESTONES_SQL` from
+      `src/database/migrations/1791702500100-studio-migrations.ts` in `psql`. Check afterwards:
+
+      ```sql
+      SELECT COUNT(*) FILTER (WHERE "firstApiCallAt" IS NOT NULL) AS api_call,
+             COUNT(*) FILTER (WHERE "firstFaucetRequestAt" IS NOT NULL) AS faucet,
+             COUNT(*) FILTER (WHERE "firstApiKeyCreatedAt" IS NOT NULL) AS api_key
+      FROM "customerActivation";
+      ```
+
+      Rollback: the migration `down` drops the three columns; `GET /admin/customers/{id}` then needs the previous
+      release.
+
+- [ ] Failed ledger writes (U-30). The migration `1791702500200` adds one nullable column `operation.errorCategory`
+      (`varchar(32)`, no default): a catalogue-only change in Postgres, so the lock on `operation` is momentary and
+      bounded by `lock_timeout = 3s`; if it times out under load, re-run the migration. No backfill. From this release a
+      failed DID create, update or deactivate, resource create or status list create or update writes one unsuccessful
+      `operation` row with `errorCategory` (`insufficient_funds`, `out_of_gas`, `ledger_unavailable`, `rejected` or
+      `other`), never the payload; these rows appear in `GET /event/list` (`successful: false`) and count in the staff
+      endpoint error rates. Error bodies of those routes gain a `code` (`insufficient_funds`, `out_of_gas`,
+      `ledger_unavailable`, `ledger_rejected`); status list create and update now answer `402` for an unfunded payer,
+      as the DID and resource routes already did. Rollback: the migration `down` drops the column.
+
+- [ ] Audit-log filters (U-43). The migration `1791702500300` adds two indexes on the small `adminAuditLog` table
+      (`action, createdAt` and `actorUserId, createdAt`; `IF NOT EXISTS`, `lock_timeout = 3s`). No data change.
+      Rollback: the migration `down` drops them.
+
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
 

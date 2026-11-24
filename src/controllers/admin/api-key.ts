@@ -24,6 +24,7 @@ import type {
 } from '../../types/admin.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import { API_KEY_MAX_ACTIVE_PER_CUSTOMER, OperationNameEnum } from '../../types/constants.js';
+import { recordActivation } from '../../services/analytics/activation.js';
 
 dotenv.config();
 
@@ -147,6 +148,8 @@ export class APIKeyController {
 					message: 'Cannot create a new API key',
 				});
 			}
+			// Activation milestone (U-35). Idempotent and never throws.
+			await recordActivation(response.locals.customer?.customerId, 'first_api_key_created');
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`API key for customer: ${response.locals.customer.customerId} has been created`,
