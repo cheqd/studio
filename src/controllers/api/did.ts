@@ -942,9 +942,10 @@ export class DIDController {
 	 *       Exports a decentralized identifier associated with the user's account together with its custodied
 	 *       private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived
 	 *       from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned
-	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a sign-in within the last
-	 *       `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
-	 *       `REAUTHENTICATION_REQUIRED` is returned.
+	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a recent portal sign-in,
+	 *       within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
+	 *       `REAUTHENTICATION_REQUIRED` is returned. API keys and machine credentials cannot call this route: they
+	 *       carry no sign-in time, so they always get that `401`.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did

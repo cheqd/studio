@@ -1750,7 +1750,8 @@
  *     ReauthenticationRequiredError:
  *       type: object
  *       description: >-
- *         The caller did not sign in recently enough. Also sent as `WWW-Authenticate: Bearer
+ *         The caller did not sign in to the portal recently enough. API keys and machine credentials carry no
+ *         sign-in time, so they always get this answer on the routes that need it. Also sent as `WWW-Authenticate: Bearer
  *         error="insufficient_user_authentication", max_age=N` (RFC 9470). Sign the user in again (Logto
  *         `max_age` / `prompt=login`) and retry.
  *       properties:
