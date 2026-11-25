@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.0-develop.9](https://github.com/cheqd/studio/compare/3.21.0-develop.8...3.21.0-develop.9) (2026-11-25)
+
+### Bug Fixes
+
+* **credo:** report revoked and suspended when verifying with status ([cd29a7c](https://github.com/cheqd/studio/commit/cd29a7c3bba7890f1fee1a9728ad5585e252539c))
+* **credo:** report revoked and suspended when verifying with status ([#925](https://github.com/cheqd/studio/issues/925)) ([aef1e8e](https://github.com/cheqd/studio/commit/aef1e8ed15a17772d91a5f2dbde289614c57fe30))
+
 ## [3.21.0-develop.8](https://github.com/cheqd/studio/compare/3.21.0-develop.7...3.21.0-develop.8) (2026-11-25)
 
 ### Bug Fixes
