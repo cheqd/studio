@@ -122,7 +122,7 @@ export class CredentialController {
 	 *   post:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Issue a Verifiable Credential
-	 *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
+	 *     description: "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued. A `jsonld` credential can only be signed when every attribute is defined by one of its `@context` entries (for example `https://schema.org` for `name`); otherwise the answer is 400 with the code `undefined_terms`, naming the attributes, and nothing is issued. A failed issue does not use up a status list entry."
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
