@@ -448,7 +448,12 @@ describe('verifyCredential', () => {
 			{ verifyStatus: true },
 			alice
 		);
-		expect(result).toMatchObject({ verified: true, policies: { credentialStatus: true } });
+		expect(result).toMatchObject({
+			verified: true,
+			policies: { credentialStatus: true },
+			revoked: false,
+			suspended: false,
+		});
 		expect(result.warnings).toBeUndefined();
 		const [call] = h.runtime.credentialState.statusCalls;
 		expect(call.credential).toMatchObject({
@@ -469,7 +474,12 @@ describe('verifyCredential', () => {
 			{ verifyStatus: true },
 			alice
 		);
-		expect(result).toMatchObject({ verified: false, error: { message, errorCode: code } });
+		expect(result).toMatchObject({
+			verified: false,
+			error: { message, errorCode: code },
+			revoked: code === 'revoked',
+			suspended: code === 'suspended',
+		});
 	});
 
 	it('reads a StatusList2021 entry written by Veramo, which has no statusListCredential, from the list url in its id', async () => {
@@ -501,6 +511,9 @@ describe('verifyCredential', () => {
 		expect(result.verified).toBe(false);
 		expect(result.error).toMatchObject({ errorCode: 'status_unavailable' });
 		expect((result.error as { message: string }).message).toContain('list is not a resource of the issuer');
+		// Not known, so not reported either way
+		expect(result).not.toHaveProperty('revoked');
+		expect(result).not.toHaveProperty('suspended');
 	});
 
 	it('does not read status when it was not asked for, or when the signature already failed', async () => {

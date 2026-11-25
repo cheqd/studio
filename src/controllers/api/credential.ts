@@ -297,7 +297,24 @@ export class CredentialController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/VerifyCredentialResult'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         description: The request is invalid, or the credential did not verify. With `verifyStatus=true` this includes a revoked or suspended credential and a status list that cannot be read. On the Credo engine, when the status was read, the body also has `revoked` and `suspended`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 verified:
+	 *                   type: boolean
+	 *                   example: false
+	 *                 error:
+	 *                   type: string
+	 *                   example: 'verify: {"message":"The credential has been revoked","errorCode":"revoked"}'
+	 *                 revoked:
+	 *                   type: boolean
+	 *                   example: true
+	 *                 suspended:
+	 *                   type: boolean
+	 *                   example: false
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       413:
@@ -354,9 +371,13 @@ export class CredentialController {
 			);
 
 			if (verifyResult.error) {
+				// A status outcome (revoked or suspended) is reported in these fields as well as in the error
+				const { revoked, suspended } = verifyResult as { revoked?: boolean; suspended?: boolean };
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified: verifyResult.verified,
 					error: `verify: ${JSON.stringify(verifyResult.error)}`,
+					...(typeof revoked === 'boolean' ? { revoked } : {}),
+					...(typeof suspended === 'boolean' ? { suspended } : {}),
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 

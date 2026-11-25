@@ -280,7 +280,9 @@ export class CredoCredentials {
 			const status = this.statusSubject(input);
 			if (status) {
 				statusChecked = true;
-				const failure = await this.checkStatus([status], tenantId, warnings);
+				const { failure, revoked, suspended } = await this.checkStatus([status], tenantId, warnings);
+				// The same fields the Veramo engine returns, so clients that read them keep working on Credo
+				if (revoked !== undefined) Object.assign(result, { revoked, suspended });
 				if (failure) return this.failed(result, failure, warnings, statusChecked);
 			}
 		}
@@ -327,7 +329,7 @@ export class CredoCredentials {
 				.filter((subject): subject is StatusSubject => subject !== null);
 			if (subjects.length > 0) {
 				statusChecked = true;
-				const failure = await this.checkStatus(subjects, tenantId, warnings);
+				const { failure } = await this.checkStatus(subjects, tenantId, warnings);
 				if (failure) return this.failed(result, failure, warnings, statusChecked);
 			}
 		}
@@ -398,14 +400,17 @@ export class CredoCredentials {
 	}
 
 	/**
-	 * Step two of the two-step check. Returns a failure (revoked, suspended, or a list that cannot be read) or null
-	 * when every entry that this engine can read is valid. Unreadable status types become warnings.
+	 * Step two of the two-step check. Returns a failure (revoked, suspended, or a list that cannot be read), or none
+	 * when every entry that this engine can read is valid, with whether any credential is revoked or suspended. Those
+	 * two are left out when a list could not be read, because then they are not known. Unreadable status types become
+	 * warnings.
 	 */
 	private async checkStatus(
 		subjects: StatusSubject[],
 		tenantId: string,
 		warnings: string[]
-	): Promise<{ message: string; errorCode: string } | null> {
+	): Promise<{ failure: { message: string; errorCode: string } | null; revoked?: boolean; suspended?: boolean }> {
+		const all: LegacyStatusOutcome[] = [];
 		for (const subject of subjects) {
 			const legacy = subject.entries.filter((entry) => LEGACY_STATUS_TYPES.includes(String(entry.type)));
 			for (const entry of subject.entries) {
@@ -415,26 +420,29 @@ export class CredoCredentials {
 			}
 			if (legacy.length === 0) continue;
 
-			let outcomes: LegacyStatusOutcome[];
 			try {
-				outcomes = await this.runtime.withTenant(tenantId, (session) =>
-					session.checkLegacyCredentialStatus({ issuer: subject.issuer, credentialStatus: legacy })
+				all.push(
+					...(await this.runtime.withTenant(tenantId, (session) =>
+						session.checkLegacyCredentialStatus({ issuer: subject.issuer, credentialStatus: legacy })
+					))
 				);
 			} catch (error) {
 				return {
-					message: `The credential status could not be read: ${error instanceof Error ? error.message : 'unknown error'}`,
-					errorCode: 'status_unavailable',
+					failure: {
+						message: `The credential status could not be read: ${error instanceof Error ? error.message : 'unknown error'}`,
+						errorCode: 'status_unavailable',
+					},
 				};
 			}
-			const revoked = outcomes.find((outcome) => outcome.revoked);
-			if (revoked) return { message: 'The credential has been revoked', errorCode: 'revoked' };
-			const suspended = outcomes.find((outcome) => outcome.suspended);
-			if (suspended) return { message: 'The credential has been suspended', errorCode: 'suspended' };
-			if (outcomes.some((outcome) => !outcome.valid)) {
-				return { message: 'The credential status is not valid', errorCode: 'status_invalid' };
-			}
 		}
-		return null;
+		const revoked = all.some((outcome) => outcome.revoked);
+		const suspended = all.some((outcome) => outcome.suspended);
+		let failure: { message: string; errorCode: string } | null = null;
+		if (revoked) failure = { message: 'The credential has been revoked', errorCode: 'revoked' };
+		else if (suspended) failure = { message: 'The credential has been suspended', errorCode: 'suspended' };
+		else if (all.some((outcome) => !outcome.valid))
+			failure = { message: 'The credential status is not valid', errorCode: 'status_invalid' };
+		return { failure, revoked, suspended };
 	}
 
 	// ----------------------------------------------------- issued credentials list
