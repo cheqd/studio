@@ -12,6 +12,7 @@ import { IdTokenUserInfoFetcher } from './user-info-fetcher/idtoken.js';
 import { M2MCredsTokenUserInfoFetcher } from './user-info-fetcher/m2m-creds-token.js';
 import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
 import { m2mCustomerPathEnabled } from './m2m-customer-path.js';
+import { recordStaffDenial } from '../../controllers/admin/staff-guard.js';
 
 export class APIGuard {
 	private authRuleRepository: AuthRuleRepository;
@@ -69,6 +70,9 @@ export class APIGuard {
 
 		// Checks if the list of scopes from user enough to make an action
 		if (!authRule.isAllowedUnauthorized() && !authRule.areValidScopes(response.locals.scopes)) {
+			// An authenticated caller without the admin scopes on a staff route: audit it (portal users cannot write
+			// audit entries, so this is how a non-staff hit on /admin is recorded)
+			if (request.path.startsWith('/admin/')) void recordStaffDenial(request, response, 'missing-scope');
 			return response.status(StatusCodes.FORBIDDEN).send({
 				error: `Unauthorized error: Your account is not authorized to carry out this action.`,
 			} satisfies ValidationErrorResponseBody);
