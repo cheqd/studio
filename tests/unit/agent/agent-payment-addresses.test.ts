@@ -220,7 +220,11 @@ describe('revokePaymentAddress and the agent lifecycle', () => {
 		await expect(noStatus.remove(customerA, agent.agentId)).rejects.toMatchObject({ status: 501 });
 		expect((await store.getAgent(customerA.customerId, agent.agentId))?.status).toBe('active');
 
-		expect(await agents.remove(customerA, agent.agentId)).toEqual({ revokedGrants: 0, revokedPaymentAddresses: 1 });
+		expect(await agents.remove(customerA, agent.agentId)).toMatchObject({
+			state: 'deleted',
+			revokedGrants: 0,
+			revokedPaymentAddresses: 1,
+		});
 		expect(listEntry(uri, idx)).toBe(1);
 		expect([...store.bindings.values()][0]?.revokedAt).toBeTruthy();
 	});

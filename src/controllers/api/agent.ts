@@ -171,6 +171,39 @@ import type { CallContext } from '../../services/agent/agent-service.js';
  *         detail:
  *           type: object
  *           description: Non-secret details of the event (ids, types, dates).
+ *     AgentRemoval:
+ *       type: object
+ *       properties:
+ *         state:
+ *           type: string
+ *           enum: [deleted, pending]
+ *         deleted:
+ *           type: boolean
+ *         revokedGrants:
+ *           type: integer
+ *           description: Grants revoked so far.
+ *         revokedPaymentAddresses:
+ *           type: integer
+ *           description: Payment address bindings revoked so far.
+ *         revoked:
+ *           type: object
+ *           properties:
+ *             grants:
+ *               type: array
+ *               items: { type: object, properties: { id: { type: string }, grantType: { type: string } } }
+ *             paymentAddresses:
+ *               type: array
+ *               items: { type: object, properties: { id: { type: string }, account: { type: string } } }
+ *         pending:
+ *           type: object
+ *           description: What is still being revoked (empty once deleted).
+ *           properties:
+ *             grants:
+ *               type: array
+ *               items: { type: object, properties: { id: { type: string }, grantType: { type: string } } }
+ *             paymentAddresses:
+ *               type: array
+ *               items: { type: object, properties: { id: { type: string }, account: { type: string } } }
  *     AgentCardInput:
  *       type: object
  *       required: [endpoint]
@@ -861,7 +894,7 @@ export class AgentController {
 	 *   delete:
 	 *     tags: [ Agents ]
 	 *     summary: Delete an agent.
-	 *     description: Revokes every live authority grant and every live payment address binding of the agent, then removes the agent (soft delete; the DID stays on the ledger). If a grant or binding cannot be revoked the agent is not deleted.
+	 *     description: Revokes every live authority grant and every live payment address binding of the agent, then removes the agent (soft delete; the DID stays on the ledger). Entries on the same status list are revoked in one ledger write. If a grant or binding cannot be revoked the agent is not deleted (what was revoked stays revoked; delete again to finish). When the revocations take longer than a few seconds the answer is 202 with `state` `pending` and the work finishes in the background; the outcome is written to the audit log (`agent.deleted` or `agent.delete.failed`), and a later GET of the agent answers 404 once it is deleted. A DELETE sent while one is running reports on the running one.
 	 *     parameters:
 	 *       - name: agentId
 	 *         in: path
@@ -875,14 +908,13 @@ export class AgentController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: object
-	 *               properties:
-	 *                 deleted:
-	 *                   type: boolean
-	 *                 revokedGrants:
-	 *                   type: integer
-	 *                 revokedPaymentAddresses:
-	 *                   type: integer
+	 *               $ref: '#/components/schemas/AgentRemoval'
+	 *       202:
+	 *         description: Revocations are still being written to the ledger; the agent is deleted when they finish.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AgentRemoval'
 	 *       400:
 	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
@@ -919,10 +951,11 @@ export class AgentController {
 
 	public remove = async (request: Request, response: Response) => {
 		return this.handleIdempotent(request, response, async () => {
-			const { revokedGrants, revokedPaymentAddresses } = await (
+			const removal = await (
 				await this.services()
-			).agents.remove(response.locals.customer, request.params.agentId as string);
-			return { status: StatusCodes.OK, body: { deleted: true, revokedGrants, revokedPaymentAddresses } };
+			).agents.remove(response.locals.customer, request.params.agentId as string, callContext(response));
+			// 202 while the revocations finish in the background: the gateway times out before several ledger writes do
+			return { status: removal.state === 'deleted' ? StatusCodes.OK : StatusCodes.ACCEPTED, body: removal };
 		});
 	};
 
