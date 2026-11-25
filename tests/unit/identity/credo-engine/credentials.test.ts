@@ -472,6 +472,25 @@ describe('verifyCredential', () => {
 		expect(result).toMatchObject({ verified: false, error: { message, errorCode: code } });
 	});
 
+	it('reads a StatusList2021 entry written by Veramo, which has no statusListCredential, from the list url in its id', async () => {
+		h.runtime.credentialState.status = [validStatus('u')];
+		const decoded = decodeJwt(jwt) as NonNullable<ReturnType<typeof decodeJwt>>;
+		const list = `https://resolver.cheqd.net/1.0/identifiers/${did}?resourceName=r&resourceType=StatusList2021Revocation`;
+		const veramoEntry = {
+			id: `${list}#7`,
+			type: 'StatusList2021Entry',
+			statusPurpose: 'revocation',
+			statusListIndex: '7',
+		};
+		const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+		const vc = { ...(decoded.payload.vc as JsonObject), credentialStatus: veramoEntry };
+		const veramoJwt = `${encode(decoded.header)}.${encode({ ...decoded.payload, vc })}.${decoded.signature}`;
+		const result = await h.engine.verifyCredential(veramoJwt, { verifyStatus: true }, alice);
+		expect(result).toMatchObject({ verified: true, policies: { credentialStatus: true } });
+		const [call] = h.runtime.credentialState.statusCalls;
+		expect(call.credential).toMatchObject({ credentialStatus: [{ ...veramoEntry, statusListCredential: list }] });
+	});
+
 	it('fails closed when the status list cannot be read', async () => {
 		h.runtime.credentialState.status = new Error('list is not a resource of the issuer');
 		const result = await h.engine.verifyCredential(
