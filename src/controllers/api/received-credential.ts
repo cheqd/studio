@@ -560,7 +560,7 @@ export class ReceivedCredentialController {
 	 *   post:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Import an externally issued credential
-	 *     description: Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore
+	 *     description: Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore. Importing a credential that is still a pending offer to the holder accepts that offer; importing a credential the holder already stores succeeds and returns its existing hash.
 	 *     requestBody:
 	 *       required: true
 	 *       content:
