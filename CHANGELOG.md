@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.0-develop.8](https://github.com/cheqd/studio/compare/3.21.0-develop.7...3.21.0-develop.8) (2026-11-25)
+
+### Bug Fixes
+
+* **credo:** verify the status of StatusList2021 credentials issued on Veramo ([9b0063d](https://github.com/cheqd/studio/commit/9b0063d02ce979ca617181f3b56b6187ad58c865))
+* **credo:** verify the status of StatusList2021 credentials issued on Veramo ([#924](https://github.com/cheqd/studio/issues/924)) ([0791f5f](https://github.com/cheqd/studio/commit/0791f5fdd58d9618161313fc6d6b5ea94cdfc91f))
+
 ## [3.21.0-develop.7](https://github.com/cheqd/studio/compare/3.21.0-develop.6...3.21.0-develop.7) (2026-11-24)
 
 ### Features
