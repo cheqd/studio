@@ -71,6 +71,16 @@ import { type CredoSigner, ownedSigningKeys, type OwnedSigningKey } from './sign
 
 const LEGACY_STATUS_TYPES = ['StatusList2021Entry', 'BitstringStatusListEntry'];
 
+/**
+ * Veramo wrote StatusList2021 entries with only an `id` (the list's url plus `#index`) and no `statusListCredential`,
+ * which the fork's status reader requires. Every such credential issued before the Credo release has this shape, so the
+ * list url is taken from the `id`, as the revoke and suspend path already does.
+ */
+function withStatusListCredential(entry: JsonObject): JsonObject {
+	if (typeof entry.statusListCredential === 'string' || typeof entry.id !== 'string') return entry;
+	return { ...entry, statusListCredential: entry.id.split('#')[0] };
+}
+
 /** Linked-resource types Studio lists as credentials (the values of `DIDAccreditationTypes`, plus plain credentials). */
 const CREDENTIAL_RESOURCE_TYPES = [
 	'VerifiableCredential',
@@ -372,7 +382,10 @@ export class CredoCredentials {
 			entries = credential.credentialStatus;
 		}
 		if (!issuer || !entries) return null;
-		return { issuer, entries: (Array.isArray(entries) ? entries : [entries]).filter(isObject) };
+		return {
+			issuer,
+			entries: (Array.isArray(entries) ? entries : [entries]).filter(isObject).map(withStatusListCredential),
+		};
 	}
 
 	private presentationCredentials(presentation: string | JsonObject): (string | JsonObject)[] {
