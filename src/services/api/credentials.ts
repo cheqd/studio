@@ -48,6 +48,20 @@ dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
 
+/** A status list index handed out for one credential, and the write cursor before it was handed out. */
+export interface StatusIndexReservation {
+	index: number;
+	registryId: string;
+	previousCursor: number;
+}
+
+/** What `issueWithRecord` needs to know to give an index back when the issue fails. */
+interface StatusIndexReservationTracker {
+	current?: StatusIndexReservation;
+	/** False once the index may be in use: the credential was signed, or a row naming the index was kept. */
+	releasable: boolean;
+}
+
 /** The base credentials context first, then the caller's contexts, without duplicates. */
 export function credentialContexts(context: string[] | undefined): string[] {
 	return [...new Set([...VC_CONTEXT, ...(context || [])])];
@@ -70,10 +84,33 @@ export class Credentials {
 	/**
 	 * Issues the credential and also returns the id of the Studio record that tracks it (`issuedCredentialId`), which
 	 * is the id `GET /credentials/issued/:id` expects. The credential itself carries no such id.
+	 *
+	 * A status list index reserved for a credential that was never signed is given back when the issue fails, so a
+	 * failed request does not count as a used entry of the list (see `releaseStatusIndex`).
 	 */
 	async issueWithRecord(
 		request: CredentialRequest,
 		customer: CustomerEntity
+	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
+		const reservation: StatusIndexReservationTracker = { releasable: true };
+		try {
+			return await this.issueAndRecord(request, customer, reservation);
+		} catch (error) {
+			if (reservation.current && reservation.releasable) {
+				await this.releaseStatusIndex(reservation.current).catch((releaseError) =>
+					console.warn(
+						`Could not release status list index ${reservation.current?.index} of registry ${reservation.current?.registryId}: ${(releaseError as Error)?.message}`
+					)
+				);
+			}
+			throw error;
+		}
+	}
+
+	private async issueAndRecord(
+		request: CredentialRequest,
+		customer: CustomerEntity,
+		reservation: StatusIndexReservationTracker
 	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
 		const {
 			attributes,
@@ -128,9 +165,10 @@ export class Credentials {
 		let statusRegistryId: string | undefined;
 		if (statusOptions && !issuedCredentialId) {
 			// Reserve index atomically using CAS pattern
-			const reservation = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
-			reservedIndex = reservation.index;
-			statusRegistryId = reservation.registryId;
+			const reserved = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
+			reservation.current = reserved;
+			reservedIndex = reserved.index;
+			statusRegistryId = reserved.registryId;
 
 			// Do not allow the issuer to override with a different index
 			if (statusOptions.statusListIndex && statusOptions.statusListIndex !== reservedIndex) {
@@ -209,6 +247,8 @@ export class Credentials {
 						// import into provider
 						await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
 					}
+					// A remote issuer may have issued even when the call fails, so its index is never given back
+					reservation.releasable = false;
 					const dockCredential = await dock.createCredential(credential, format, statusOptions, customer);
 					verifiableCredential = dockCredential;
 					providerCredentialId = dockCredential.id as string;
@@ -236,6 +276,8 @@ export class Credentials {
 						statusOptions as never,
 						customer
 					)) as unknown as VerifiableCredential;
+					// Signed: the credential carries the index from here on, so it stays used even if a later step fails
+					reservation.releasable = false;
 
 					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 					let sendCredentialResponse;
@@ -361,10 +403,10 @@ export class Credentials {
 
 			return { credential: verifiableCredential, issuedCredentialId: trackingRecord.issuedCredentialId };
 		} catch (error) {
-			// Phase 5: a row this call created, for a credential that was never published, is removed: the index it
-			// reserved stays consumed (the write cursor has already moved past it), so nothing is reused, and no
-			// `unknown` row is left for a request that failed. A row that existed before this call, or one whose
-			// credential reached a resource connector, is kept and marked `unknown` with the failure.
+			// Phase 5: a row this call created, for a credential that was never published, is removed, and no
+			// `unknown` row is left for a request that failed. Its index is given back by `issueWithRecord` when
+			// nothing was signed with it. A row that existed before this call, or one whose credential reached a
+			// resource connector, is kept and marked `unknown` with the failure.
 			if (!issuedCredentialId && !publishedToConnector) {
 				const removed = await this.repository
 					.delete({ issuedCredentialId: trackingRecord.issuedCredentialId })
@@ -373,6 +415,8 @@ export class Credentials {
 				// The row could not be removed: fall through and record the failure on it instead
 				if (removed) throw error;
 			}
+			// The row stays and still names the index, so the index is not handed out again
+			reservation.releasable = false;
 			await this.repository.update(
 				{ issuedCredentialId: trackingRecord.issuedCredentialId },
 				{
@@ -418,7 +462,7 @@ export class Credentials {
 		issuerDid: string,
 		customer: CustomerEntity,
 		maxRetries: number = 5
-	): Promise<{ index: number; registryId: string }> {
+	): Promise<StatusIndexReservation> {
 		let attempt = 0;
 		const baseDelay = 5; // ms
 
@@ -539,7 +583,11 @@ export class Credentials {
 					eventTracker.emit('track', trackInfo);
 				}
 
-				return { index: nextIndex, registryId: statusRegistry.registryId };
+				return {
+					index: nextIndex,
+					registryId: statusRegistry.registryId,
+					previousCursor: statusRegistry.writeCursor,
+				};
 			}
 
 			// CAS failed - concurrent modification detected
@@ -552,6 +600,36 @@ export class Credentials {
 		}
 
 		throw new Error(`Failed to reserve index after ${maxRetries} attempts - high concurrency`);
+	}
+
+	/**
+	 * Gives back an index `reserveStatusIndex` handed out for a credential that was never signed, so a failed issue
+	 * does not count as a used entry of the list. Only the latest reservation can be given back: the write cursor
+	 * moves back to where it was only while it still points at this index (compare-and-swap on the cursor and the
+	 * version). If another issue has reserved an index since, this one stays consumed, which is safe (nothing reuses
+	 * it) and only costs one unused entry; so does a list the reservation filled. Returns whether the index was given
+	 * back.
+	 */
+	async releaseStatusIndex(reservation: StatusIndexReservation, maxRetries: number = 5): Promise<boolean> {
+		for (let attempt = 0; attempt < maxRetries; attempt++) {
+			const registry = await this.statusRegistryRepository.findOne({
+				where: { registryId: reservation.registryId },
+			});
+			if (!registry || registry.writeCursor !== reservation.index) return false;
+			// A list the reservation filled may already have been rotated; it is left as it is
+			if (registry.state !== StatusRegistryState.Active) return false;
+
+			const result = await this.statusRegistryRepository
+				.createQueryBuilder()
+				.update(StatusRegistryEntity)
+				.set({ writeCursor: reservation.previousCursor, version: registry.version + 1, updatedAt: new Date() })
+				.where('registryId = :registryId', { registryId: registry.registryId })
+				.andWhere('version = :version', { version: registry.version })
+				.andWhere('writeCursor = :writeCursor', { writeCursor: reservation.index })
+				.execute();
+			if ((result.affected ?? 0) === 1) return true;
+		}
+		return false;
 	}
 
 	/**
