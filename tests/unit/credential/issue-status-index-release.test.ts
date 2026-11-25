@@ -193,3 +193,47 @@ describe('status list index of a failed issue', () => {
 		expect(registry.state).toBe('FULL');
 	});
 });
+
+describe('the body of a JSON-LD credential', () => {
+	beforeEach(() => {
+		rows.clear();
+		didExists = async () => false;
+	});
+
+	it('is kept on the row and returned with includeCredential', async () => {
+		const signedCredential = {
+			'@context': ['https://www.w3.org/2018/credentials/v1', 'https://schema.org'],
+			type: ['VerifiableCredential'],
+			issuer: { id: issuerDid },
+			credentialSubject: { id: 'did:key:z6Mk', name: 'Ada' },
+			proof: { type: 'Ed25519Signature2020', proofValue: 'z1' },
+		};
+		createCredential = async () => signedCredential;
+		const credentials = new Credentials();
+		const { issuedCredentialId } = await credentials.issueWithRecord(
+			{ issuerDid, subjectDid: 'did:key:z6Mk', attributes: { name: 'Ada' }, format: 'jsonld' } as never,
+			customer
+		);
+		const row = rows.get(issuedCredentialId);
+		expect(row.metadata.credential).toEqual(signedCredential);
+
+		row.customer = { customerId: 'c-1' };
+		const spied = credentials as unknown as { fetchCredentialFromProvider: () => Promise<unknown> };
+		jest.spyOn(spied, 'fetchCredentialFromProvider').mockResolvedValue(null);
+		const listed = await credentials.get(issuedCredentialId, customer);
+		expect(listed?.providerMetadata?.credential).toEqual(signedCredential);
+		expect(listed?.credential).toBeUndefined();
+		const withBody = await credentials.get(issuedCredentialId, customer, { includeCredential: true });
+		expect(withBody?.credential).toEqual(signedCredential);
+	});
+
+	it('is not duplicated for a JWT credential, which is whole in proof.jwt', async () => {
+		createCredential = async (credential) => ({ ...credential, proof: { type: 'JwtProof2020', jwt: 'a.b.c' } });
+		const { issuedCredentialId } = await new Credentials().issueWithRecord(
+			{ issuerDid, subjectDid: 'did:key:z6Mk', attributes: {}, format: 'jwt' } as never,
+			customer
+		);
+		expect(rows.get(issuedCredentialId).metadata.credential).toBeUndefined();
+		expect(rows.get(issuedCredentialId).metadata.proof.jwt).toBe('a.b.c');
+	});
+});

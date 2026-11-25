@@ -344,6 +344,9 @@ export class Credentials {
 						didUrl: sendCredentialResponse?.didUrl,
 						termsOfUse: additionalData.termsOfUse,
 						contexts: credentialContexts(context),
+						// A JWT credential can be rebuilt from `proof.jwt`; a JSON-LD one cannot, so the signed document
+						// is kept whole (see `IssuedCredentialResponse.providerMetadata.credential`)
+						...(signingFormat === 'jsonld' ? { credential: verifiable_credential } : {}),
 					};
 					verifiableCredential = verifiable_credential;
 					break;
@@ -775,6 +778,10 @@ export class Credentials {
 		let credential: VerifiableCredential | null = null;
 		if (includeCredential) {
 			credential = await this.fetchCredentialFromProvider(entity);
+			// A JSON-LD credential that was not published anywhere is only kept on its row
+			if (!credential && entity.metadata?.credential && typeof entity.metadata.credential === 'object') {
+				credential = entity.metadata.credential as VerifiableCredential;
+			}
 		}
 		return this.toResponse(entity, { includeCredential, credential: credential ?? undefined });
 	}
