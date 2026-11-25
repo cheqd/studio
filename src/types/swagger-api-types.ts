@@ -2267,11 +2267,13 @@
  *       description: >-
  *         Either `{ supported: false, reason, range, kind, from, to }` (the ledger data source is off or cannot be
  *         read: not zero) or the full shape below. `state` is `empty` when the customer has no payer account or has
- *         never written. No fee or CHEQ figure is ever returned to customers.
+ *         never written, and `delayed` when Studio made writes for the customer in the last 24 hours that the ledger
+ *         index (cheqd data API) does not show yet: the index runs behind the ledger, so this is not zero activity.
+ *         No fee or CHEQ figure is ever returned to customers.
  *       properties:
  *         supported: { type: boolean }
  *         reason: { type: string }
- *         state: { type: string, enum: [ok, empty] }
+ *         state: { type: string, enum: [ok, empty, delayed] }
  *         range: { type: integer, enum: [7, 30] }
  *         kind: { type: string, enum: [all, organisation, agent] }
  *         from: { type: string, example: '2026-10-17' }

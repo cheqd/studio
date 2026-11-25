@@ -41,6 +41,8 @@ interface Fixture {
 	writes?: LedgerWrite[];
 	extent?: { firstWriteAt: Date | null; lastWriteAt: Date | null };
 	capped?: boolean;
+	/** Studio's own latest DID or resource write for `mine`. */
+	localLatest?: string;
 }
 
 function setup(fixture: Fixture = {}, ttlMs?: number, maxEntries?: number) {
@@ -59,6 +61,11 @@ function setup(fixture: Fixture = {}, ttlMs?: number, maxEntries?: number) {
 			query: async (sql: string, parameters: unknown[] = []) => {
 				queries.push({ sql, parameters });
 				const customer = parameters[0] as string;
+				if (sql.includes('GREATEST')) {
+					return [
+						{ latest: customer === mine && fixture.localLatest ? new Date(fixture.localLatest) : null },
+					];
+				}
 				if (sql.includes('"paymentAccount"')) {
 					return customer === mine
 						? (fixture.accounts ?? [{ address: 'cheqd1mine', namespace: 'testnet' }])
@@ -154,6 +161,40 @@ describe('CustomerLedgerAnalyticsService', () => {
 		expect(result.state).toBe('empty');
 		expect(result.series.days).toHaveLength(30);
 		expect(reader.writes).toHaveBeenCalledWith('cheqd1mine', new Date('2026-10-17T00:00:00Z'), 'testnet');
+	});
+
+	it('says the index is behind, not empty, when Studio wrote for the account recently and the index shows nothing', async () => {
+		// 40 minutes before NOW: identifiers and an agent created, nothing indexed yet
+		const { service } = setup({ localLatest: '2026-11-15T11:20:00Z' });
+		const result = supported(await service.ledger(mine, 30, 'all'));
+		expect(result.state).toBe('delayed');
+		expect(result.reason).toContain('not zero activity');
+		expect(result.reason).toContain('2026-11-15T11:20:00.000Z');
+		expect(result.tiles.writes).toBe(0);
+	});
+
+	it('asks the index again soon after a delayed answer instead of keeping it for minutes', async () => {
+		const { service, reader, advance } = setup({ localLatest: '2026-11-15T11:20:00Z' });
+		await service.ledger(mine, 30, 'all');
+		advance(FAILURE_TTL_MS + 1);
+		await service.ledger(mine, 30, 'all');
+		expect(reader.writes).toHaveBeenCalledTimes(2);
+	});
+
+	it('stays empty when Studio’s own latest write is older than a day (not an index delay)', async () => {
+		const { service } = setup({ localLatest: '2026-11-10T11:20:00Z' });
+		expect(supported(await service.ledger(mine, 30, 'all')).state).toBe('empty');
+	});
+
+	it('notes that recent writes may be missing when Studio wrote after the newest indexed write', async () => {
+		const { service } = setup({
+			localLatest: '2026-11-15T11:50:00Z',
+			writes: [write('createDid', '2026-11-15T09:00:00Z', 'did:cheqd:testnet:aaaa')],
+			extent: { firstWriteAt: new Date('2026-11-15T09:00:00Z'), lastWriteAt: new Date('2026-11-15T09:00:00Z') },
+		});
+		const result = supported(await service.ledger(mine, 30, 'all'));
+		expect(result.state).toBe('ok');
+		expect(result.notes.some((note) => note.includes('has not caught up'))).toBe(true);
 	});
 
 	const did1 = 'did:cheqd:testnet:aaaa';
