@@ -10,12 +10,7 @@ import {
 } from '../../types/accreditation.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { statusListArtifactFromCredential } from '../identity/engine/artifact-refs.js';
-import {
-	buildCacheKey,
-	getCachedAccreditation,
-	inFlightAccreditations,
-	setCachedAccreditation,
-} from '../identity/engine/accreditation-cache.js';
+import { accreditationContentCache } from '../identity/engine/accreditation-cache.js';
 import { engineRouter } from '../identity/engine/db-lookups.js';
 import type { EngineAccreditationVerifyRequest } from '../identity/engine/types.js';
 import type { IVerifyResult, VerificationPolicies, VerifiableCredential } from '@veramo/core';
@@ -533,68 +528,50 @@ export class AccreditationService {
 				trackingMap.set(record.providerCredentialId, record);
 			}
 
-			const resolveAccreditationWithCache = async (url: string) => {
-				const cacheKey = buildCacheKey(url, customer?.customerId);
-				const cached = getCachedAccreditation(cacheKey);
-				if (cached) {
-					return cached;
-				}
-				const inFlight = inFlightAccreditations.get(cacheKey);
-				if (inFlight) {
-					return inFlight;
-				}
-				const resolverPromise = (async () => {
-					try {
+			// The credential of a resource version never changes, so it comes from the content cache after the first
+			// read (one resolver call per resource, shared by concurrent requests and customers). The tracking
+			// status is merged on every request from the table read above, so it is never stale.
+			const resolveAccreditationWithCache = async (url: string): Promise<Record<string, any> | null> => {
+				let content: { resourceId: string; credential: unknown } | null;
+				try {
+					content = await accreditationContentCache.get(url, async () => {
 						const res = await engine.resolve(url, true);
 						const credential = await res.json();
-
 						// Skip if the credential doesn't have contentStream
-						if (!credential.contentStream) {
-							return null;
-						}
+						if (!credential?.contentStream) return null;
+						return {
+							resourceId: credential.contentMetadata?.resourceId,
+							credential: credential.contentStream,
+						};
+					});
+				} catch (error) {
+					console.error(`Failed to process accreditation for URL: ${url}`, error);
+					return null;
+				}
+				if (!content) return null;
 
-						const resourceId = credential.contentMetadata.resourceId;
-
-						const trackingRecord = trackingMap.get(resourceId);
-
-						if (trackingRecord) {
-							const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
-								trackingRecord;
-
-							// Merge tracking metadata with credential
-							const accreditation = {
-								...credential.contentStream,
-								metadata: {
-									issuedCredentialId,
-									providerId,
-									providerCredentialId,
-									status,
-									statusUpdatedAt,
-								},
-							};
-							setCachedAccreditation(cacheKey, accreditation);
-							return accreditation;
-						} else {
-							// No tracking record, return just the credential (legacy)
-							setCachedAccreditation(cacheKey, credential.contentStream);
-							return credential.contentStream;
-						}
-					} catch (error) {
-						console.error(`Failed to process accreditation for URL: ${url}`, error);
-						return null;
-					} finally {
-						inFlightAccreditations.delete(cacheKey);
-					}
-				})();
-
-				inFlightAccreditations.set(cacheKey, resolverPromise);
-				return resolverPromise;
+				const trackingRecord = trackingMap.get(content.resourceId);
+				if (!trackingRecord) {
+					// No tracking record, return just the credential (legacy)
+					return content.credential as Record<string, any>;
+				}
+				const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
+					trackingRecord;
+				// Merge tracking metadata with credential
+				return {
+					...(content.credential as Record<string, any>),
+					metadata: {
+						issuedCredentialId,
+						providerId,
+						providerCredentialId,
+						status,
+						statusUpdatedAt,
+					},
+				};
 			};
 
 			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
-			const resolvedAccreditations: Array<ReturnType<typeof resolveAccreditationWithCache>> = new Array(
-				resourceUrls.length
-			);
+			const resolvedAccreditations: Array<Record<string, any>> = new Array(resourceUrls.length);
 			let currentIndex = 0;
 
 			const workers = Array.from(

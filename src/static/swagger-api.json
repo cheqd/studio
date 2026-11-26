@@ -1180,10 +1180,20 @@
           "providerMetadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Provider-specific metadata"
+            "description": "Provider-specific metadata. For a `jwt` credential the whole credential is in `proof.jwt`. For a `jsonld` credential issued by Studio, `credential` holds the whole signed credential. JSON-LD credentials issued before this field was added have only `proof` and `contexts`; their body was not kept and cannot be returned.",
+            "properties": {
+              "credential": {
+                "$ref": "#/components/schemas/VerifiableCredential"
+              }
+            }
           },
           "credential": {
-            "$ref": "#/components/schemas/VerifiableCredential"
+            "description": "The whole credential, sent only with `includeCredential=true` and only when it can be found: from the resource it was published to or, for a `jsonld` credential, from `providerMetadata.credential`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerifiableCredential"
+              }
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -3951,7 +3961,7 @@
       },
       "CustomerLedgerAnalyticsResponse": {
         "type": "object",
-        "description": "Either `{ supported: false, reason, range, kind, from, to }` (the ledger data source is off or cannot be read: not zero) or the full shape below. `state` is `empty` when the customer has no payer account or has never written. No fee or CHEQ figure is ever returned to customers.",
+        "description": "Either `{ supported: false, reason, range, kind, from, to }` (the ledger data source is off or cannot be read: not zero) or the full shape below. `state` is `empty` when the customer has no payer account or has never written, and `delayed` when Studio made writes for the customer in the last 24 hours that the ledger index (cheqd data API) does not show yet: the index runs behind the ledger, so this is not zero activity. No fee or CHEQ figure is ever returned to customers.",
         "properties": {
           "supported": {
             "type": "boolean"
@@ -3963,7 +3973,8 @@
             "type": "string",
             "enum": [
               "ok",
-              "empty"
+              "empty",
+              "delayed"
             ]
           },
           "range": {
@@ -8052,7 +8063,7 @@
           "Verifiable Credentials"
         ],
         "summary": "Issue a Verifiable Credential",
-        "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
+        "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued. A `jsonld` credential can only be signed when every attribute is defined by one of its `@context` entries (for example `https://schema.org` for `name`); otherwise the answer is 400 with the code `undefined_terms`, naming the attributes, and nothing is issued. A failed issue does not use up a status list entry.",
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
@@ -11769,7 +11780,7 @@
           "Verifiable Credentials"
         ],
         "summary": "Import an externally issued credential",
-        "description": "Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore",
+        "description": "Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore. Importing a credential that is still a pending offer to the holder accepts that offer; importing a credential the holder already stores succeeds and returns its existing hash.",
         "requestBody": {
           "required": true,
           "content": {

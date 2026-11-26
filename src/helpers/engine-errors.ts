@@ -9,6 +9,7 @@ import {
 	CredoNotSupportedError,
 	CredoOwnershipError,
 	CredoTenantMissingError,
+	CredoUndefinedTermsError,
 	NotImplementedByEngineError,
 } from '../services/identity/engine/credo/errors.js';
 
@@ -34,6 +35,7 @@ export interface MappedEngineError {
  *   NotImplementedByEngine                        -> 501, without naming the method
  *   CredoOwnershipError                           -> 404 (the same answer for "not yours" and "does not exist")
  *   CredoExtraSignersNotSupported                 -> 400 (publicKeyHexs on a Credo DID)
+ *   CredoUndefinedTerms                           -> 400 (JSON-LD attributes no @context defines)
  *   CredoConfigurationError                       -> 503, without the variable names (they are logged)
  *   CredoTenantMissing                            -> 500, as before
  */
@@ -70,6 +72,9 @@ export function mapEngineError(error: unknown, options: { log?: boolean } = {}):
 		};
 	}
 	if (error instanceof CredoExtraSignersNotSupportedError) {
+		return { status: StatusCodes.BAD_REQUEST, code: error.code, error: error.message };
+	}
+	if (error instanceof CredoUndefinedTermsError) {
 		return { status: StatusCodes.BAD_REQUEST, code: error.code, error: error.message };
 	}
 	if (error instanceof CredoOwnershipError) {

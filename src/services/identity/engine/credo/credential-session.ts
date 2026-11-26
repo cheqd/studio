@@ -1,14 +1,17 @@
 import {
 	ClaimFormat,
+	JsonLdModuleConfig,
 	JsonTransformer,
 	RecordNotFoundError,
 	W3cCredential,
 	W3cCredentialRecord,
 	W3cJsonLdVerifiableCredential,
 	W3cJsonLdVerifiablePresentation,
+	vcLibraries,
 } from '@credo-ts/core';
 import type { JsonObject } from '../types.js';
 import type { CredentialSession, CredoVerification, CredoVerificationCheck } from './credential-ports.js';
+import { CredoUndefinedTermsError } from './errors.js';
 
 /**
  * The Credo side of credentials, presentations and signing: the one place these operations touch Credo's API. It is
@@ -18,7 +21,67 @@ import type { CredentialSession, CredoVerification, CredoVerificationCheck } fro
  * as in `credo-runtime.ts`.
  */
 // biome-ignore lint/suspicious/noExplicitAny: the Credo API objects are generic over the module set
-type TenantAgent = { kms: any; w3cCredentials: any; modules: any };
+type TenantAgent = { kms: any; w3cCredentials: any; modules: any; context?: any };
+
+type DocumentLoader = (url: string) => Promise<unknown>;
+
+/**
+ * When JSON-LD signing failed because the document has a term no `@context` defines, returns `{ term }` with the
+ * term jsonld reported (it stops at the first one). Returns undefined for any other failure. jsonld raises this as a
+ * `jsonld.ValidationError` ("Safe mode validation error.") with an `invalid property` event; Credo wraps it.
+ */
+export function undefinedTermFailure(error: unknown): { term?: string } | undefined {
+	let current: unknown = error;
+	for (let depth = 0; depth < 5 && current; depth++) {
+		const candidate = current as {
+			name?: unknown;
+			details?: { event?: { code?: unknown; details?: { property?: unknown } } };
+			cause?: unknown;
+		};
+		const event = candidate.details?.event;
+		if (candidate.name === 'jsonld.ValidationError' && event?.code === 'invalid property') {
+			const property = event.details?.property;
+			return typeof property === 'string' ? { term: property } : {};
+		}
+		current = candidate.cause;
+	}
+	return undefined;
+}
+
+/**
+ * Every term of the document that no `@context` defines, found by expanding it without jsonld's safe mode and
+ * listening for the terms it drops (the same events Credo collects when verifying with `allowUndefinedTerms`).
+ */
+export async function collectUndefinedTerms(document: JsonObject, documentLoader: DocumentLoader): Promise<string[]> {
+	const terms = new Set<string>();
+	await vcLibraries.jsonld.expand(document, {
+		documentLoader,
+		safe: false,
+		eventHandler: ({
+			event,
+			next,
+		}: {
+			event: { code?: string; details?: { property?: unknown } };
+			next: () => void;
+		}) => {
+			if (event.code === 'invalid property' && typeof event.details?.property === 'string') {
+				terms.add(event.details.property);
+			}
+			next();
+		},
+	});
+	return [...terms];
+}
+
+/** The tenant's JSON-LD document loader (Studio's safe loader), or undefined when the agent does not expose it. */
+function documentLoaderOf(agent: TenantAgent): DocumentLoader | undefined {
+	try {
+		const config = agent.context?.resolve?.(JsonLdModuleConfig) as JsonLdModuleConfig | undefined;
+		return config ? (config.documentLoader(agent.context) as DocumentLoader) : undefined;
+	} catch {
+		return undefined;
+	}
+}
 
 /** The error's message, with the messages of the errors it wraps (vc.js reports its failures in `errors`). */
 function message(error: unknown): string {
@@ -74,13 +137,22 @@ export function credentialSession(agent: TenantAgent): CredentialSession {
 		},
 
 		async signJsonLdCredential({ credential, verificationMethod, proofType }) {
-			const signed = await agent.w3cCredentials.signCredential({
-				format: ClaimFormat.LdpVc,
-				credential: JsonTransformer.fromJSON(credential, W3cCredential),
-				verificationMethod,
-				proofType,
-			});
-			return JsonTransformer.toJSON(signed) as JsonObject;
+			try {
+				const signed = await agent.w3cCredentials.signCredential({
+					format: ClaimFormat.LdpVc,
+					credential: JsonTransformer.fromJSON(credential, W3cCredential),
+					verificationMethod,
+					proofType,
+				});
+				return JsonTransformer.toJSON(signed) as JsonObject;
+			} catch (error) {
+				const failure = undefinedTermFailure(error);
+				if (!failure) throw error;
+				// jsonld names only the first undefined term; expanding the document once more finds all of them
+				const loader = documentLoaderOf(agent);
+				const terms = loader ? await collectUndefinedTerms(credential, loader).catch(() => []) : [];
+				throw new CredoUndefinedTermsError(terms.length > 0 ? terms : failure.term ? [failure.term] : []);
+			}
 		},
 
 		async verifyCredential({ credential, allowUndefinedTerms }) {
