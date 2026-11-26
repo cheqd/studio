@@ -379,9 +379,14 @@
  *         providerMetadata:
  *           type: object
  *           additionalProperties: true
- *           description: Provider-specific metadata
+ *           description: "Provider-specific metadata. For a `jwt` credential the whole credential is in `proof.jwt`. For a `jsonld` credential issued by Studio, `credential` holds the whole signed credential. JSON-LD credentials issued before this field was added have only `proof` and `contexts`; their body was not kept and cannot be returned."
+ *           properties:
+ *             credential:
+ *               $ref: '#/components/schemas/VerifiableCredential'
  *         credential:
- *           $ref: '#/components/schemas/VerifiableCredential'
+ *           description: "The whole credential, sent only with `includeCredential=true` and only when it can be found: from the resource it was published to or, for a `jsonld` credential, from `providerMetadata.credential`."
+ *           allOf:
+ *             - $ref: '#/components/schemas/VerifiableCredential'
  *         createdAt:
  *           type: string
  *           format: date-time
