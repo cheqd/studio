@@ -34,6 +34,7 @@ import type { AgentEngineProvider } from './agent-engine.js';
 import {
 	actsForExists,
 	actsForIsAgent,
+	AgentServiceError,
 	badRequest,
 	conflict,
 	credentialNotStored,
@@ -110,7 +111,52 @@ export interface AgentServiceOptions {
 	resolverUrl?: () => string;
 	/** Longest a grant's expiry may be set to, from now. Defaults to `AGENT_GRANT_MAX_LIFETIME_DAYS` or 365 days. */
 	maxGrantLifetimeDays?: () => number;
+	/**
+	 * How long a delete waits for its revocations before answering `pending` and finishing in the background.
+	 * Defaults to `AGENT_DELETE_WAIT_MS` or 8 seconds, under the gateway's timeout.
+	 */
+	removalWaitMs?: () => number;
 }
+
+interface RemovalProgress {
+	grants: { id: string; grantType: string; revoked: boolean }[];
+	paymentAddresses: { id: string; account: string; revoked: boolean }[];
+	deleted: boolean;
+	/** Set when the removal failed: the agent was not deleted. */
+	error?: string;
+}
+
+/** What a delete answers: done (`deleted`), still revoking in the background (`pending`), or `failed`. */
+export type AgentRemoval = {
+	state: 'deleted' | 'pending' | 'failed';
+	deleted: boolean;
+	revokedGrants: number;
+	revokedPaymentAddresses: number;
+	revoked: { grants: { id: string; grantType: string }[]; paymentAddresses: { id: string; account: string }[] };
+	pending: { grants: { id: string; grantType: string }[]; paymentAddresses: { id: string; account: string }[] };
+	error?: string;
+};
+
+function removalView(progress: RemovalProgress): AgentRemoval {
+	const grant = ({ id, grantType }: RemovalProgress['grants'][number]) => ({ id, grantType });
+	const binding = ({ id, account }: RemovalProgress['paymentAddresses'][number]) => ({ id, account });
+	const revokedGrants = progress.grants.filter((item) => item.revoked);
+	const revokedBindings = progress.paymentAddresses.filter((item) => item.revoked);
+	return {
+		state: progress.deleted ? 'deleted' : progress.error ? 'failed' : 'pending',
+		deleted: progress.deleted,
+		revokedGrants: revokedGrants.length,
+		revokedPaymentAddresses: revokedBindings.length,
+		revoked: { grants: revokedGrants.map(grant), paymentAddresses: revokedBindings.map(binding) },
+		pending: {
+			grants: progress.grants.filter((item) => !item.revoked).map(grant),
+			paymentAddresses: progress.paymentAddresses.filter((item) => !item.revoked).map(binding),
+		},
+		...(progress.error ? { error: progress.error } : {}),
+	};
+}
+
+const DEFAULT_REMOVAL_WAIT_MS = 8000;
 
 const DEFAULT_STATUS_LIST_SIZE = 131072;
 const MAX_NAME = 200;
@@ -169,6 +215,9 @@ export class AgentService {
 	private readonly maxGrantLifetimeDays: () => number;
 	/** Key changes and expiry changes in progress in this process (`agent:<id>` or `grant:<id>`). */
 	private readonly inFlight = new Set<string>();
+	/** Deletes in progress in this process, by agent id, so a retried DELETE reports on the running one. */
+	private readonly removals = new Map<string, { progress: RemovalProgress; done: Promise<void> }>();
+	private readonly removalWaitMs: () => number;
 
 	constructor(options: AgentServiceOptions) {
 		this.store = options.store;
@@ -184,6 +233,12 @@ export class AgentService {
 			(() => {
 				const configured = Number(process.env.AGENT_GRANT_MAX_LIFETIME_DAYS);
 				return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_GRANT_LIFETIME_DAYS;
+			});
+		this.removalWaitMs =
+			options.removalWaitMs ??
+			(() => {
+				const configured = Number(process.env.AGENT_DELETE_WAIT_MS || Number.NaN);
+				return Number.isFinite(configured) && configured >= 0 ? configured : DEFAULT_REMOVAL_WAIT_MS;
 			});
 	}
 
@@ -358,20 +413,157 @@ export class AgentService {
 	/**
 	 * Soft-deletes the agent. Live authority grants and live payment address bindings are revoked first, so a
 	 * deleted agent cannot keep using a credential: if that cannot be done (no engine capability, ledger failure)
-	 * the agent is NOT deleted.
+	 * the agent is NOT deleted. Answers once done, or with `state: 'pending'` after the wait budget while the
+	 * revocations and the delete finish in the background (see `runRemoval`).
 	 */
 	async remove(
 		customerIn: CustomerEntity | undefined,
-		agentId: string
-	): Promise<{ revokedGrants: number; revokedPaymentAddresses: number }> {
+		agentId: string,
+		ctx: CallContext = {}
+	): Promise<AgentRemoval> {
 		const customer = requireCustomer(customerIn);
 		await this.owned(customer, agentId);
-		const live = await this.store.listLiveGrants(customer.customerId, agentId);
-		for (const grant of live) await this.revokeLoaded(customer, grant);
+
+		// A delete already running for this agent (a retry after a gateway timeout): report on it, start nothing
+		const running = this.removals.get(agentId);
+		if (running) return this.awaitRemoval(running);
+
+		const grants = await this.store.listLiveGrants(customer.customerId, agentId);
 		const bindings = await this.store.listLiveBindings(customer.customerId, agentId);
-		for (const binding of bindings) await this.revokeBindingLoaded(customer, binding);
-		if (!(await this.store.softDeleteAgent(customer.customerId, agentId))) throw notFound();
-		return { revokedGrants: live.length, revokedPaymentAddresses: bindings.length };
+		const onLedger = (entry: {
+			statusListUri?: string | null;
+			issuerDid?: string | null;
+			statusIndex?: number | null;
+		}) =>
+			!!entry.statusListUri && !!entry.issuerDid && entry.statusIndex !== null && entry.statusIndex !== undefined;
+		// Refused before anything is written, as before: a 501 leaves the agent and its grants untouched
+		if ([...grants, ...bindings].some(onLedger))
+			requireCapabilities(await this.engineFor(customer), 'setTokenStatus');
+
+		const progress: RemovalProgress = {
+			grants: grants.map((grant) => ({ id: grant.id, grantType: grant.grantType, revoked: !!grant.revokedAt })),
+			paymentAddresses: bindings.map((binding) => ({
+				id: binding.id,
+				account: binding.account,
+				revoked: !!binding.revokedAt,
+			})),
+			deleted: false,
+		};
+		const done = this.runRemoval(customer, agentId, grants, bindings, progress, ctx);
+		const removal = { progress, done };
+		this.removals.set(agentId, removal);
+		done.then(
+			() => this.removals.delete(agentId),
+			() => this.removals.delete(agentId)
+		);
+		return this.awaitRemoval(removal);
+	}
+
+	/**
+	 * Waits for a removal up to the wait budget: the finished result, the error if it failed in that time, or a
+	 * `pending` answer while the ledger writes go on in the background (the gateway in front of Studio times out
+	 * well before a delete with several revocations finishes).
+	 */
+	private async awaitRemoval(removal: { progress: RemovalProgress; done: Promise<void> }): Promise<AgentRemoval> {
+		let timer: NodeJS.Timeout | undefined;
+		const timedOut = new Promise<'pending'>((resolve) => {
+			timer = setTimeout(() => resolve('pending'), this.removalWaitMs());
+		});
+		try {
+			await Promise.race([removal.done, timedOut]);
+		} finally {
+			clearTimeout(timer);
+		}
+		return removalView(removal.progress);
+	}
+
+	/**
+	 * Revokes the agent's live grants and bindings, then soft-deletes it. Entries on the same status list are revoked
+	 * in one ledger write (one `setTokenStatus` with every index), so a typical agent (grants from one organisation
+	 * DID, bindings on the agent's own list) needs two writes instead of one per credential. Lists are written one
+	 * after another: every write goes through the same payer's lock, so running them at once would only queue them.
+	 * The agent is deleted only once everything is revoked; a failure leaves it in place, with whatever was revoked
+	 * already marked, so deleting again finishes the job. The outcome is written to the audit log.
+	 */
+	private async runRemoval(
+		customer: CustomerEntity,
+		agentId: string,
+		grants: AuthorityGrantWithStatus[],
+		bindings: PaymentAddressBindingWithStatus[],
+		progress: RemovalProgress,
+		ctx: CallContext
+	): Promise<void> {
+		type Entry = { kind: 'grant' | 'binding'; id: string; issuerDid: string; uri: string; index: number };
+		const byList = new Map<string, Entry[]>();
+		const offLedger: Omit<Entry, 'issuerDid' | 'uri' | 'index'>[] = [];
+		const add = (kind: Entry['kind'], item: AuthorityGrantWithStatus | PaymentAddressBindingWithStatus) => {
+			if (item.revokedAt) return;
+			if (item.statusListUri && item.issuerDid && item.statusIndex !== null && item.statusIndex !== undefined) {
+				const key = `${item.issuerDid} ${item.statusListUri}`;
+				const entries = byList.get(key) ?? [];
+				entries.push({
+					kind,
+					id: item.id,
+					issuerDid: item.issuerDid,
+					uri: item.statusListUri,
+					index: item.statusIndex,
+				});
+				byList.set(key, entries);
+			} else {
+				offLedger.push({ kind, id: item.id });
+			}
+		};
+		grants.forEach((grant) => add('grant', grant));
+		bindings.forEach((binding) => add('binding', binding));
+
+		const markRevoked = async (entry: { kind: Entry['kind']; id: string }) => {
+			if (entry.kind === 'grant') {
+				if (!(await this.store.markGrantRevoked(customer.customerId, agentId, entry.id)))
+					throw notFound('Authority grant');
+				const item = progress.grants.find((grant) => grant.id === entry.id);
+				if (item) item.revoked = true;
+			} else {
+				if (!(await this.store.markBindingRevoked(customer.customerId, agentId, entry.id)))
+					throw notFound('Payment address binding');
+				const item = progress.paymentAddresses.find((binding) => binding.id === entry.id);
+				if (item) item.revoked = true;
+			}
+		};
+
+		try {
+			for (const entry of offLedger) await markRevoked(entry);
+			if (byList.size > 0) {
+				const engine = await this.engineFor(customer);
+				const setStatus = engineMethod(engine, 'setTokenStatus');
+				for (const entries of byList.values()) {
+					await setStatus(
+						entries[0].issuerDid,
+						entries[0].uri,
+						entries.map((entry) => ({ index: entry.index, status: STATUS_REVOKED })),
+						customer
+					);
+					for (const entry of entries) await markRevoked(entry);
+				}
+			}
+			if (!(await this.store.softDeleteAgent(customer.customerId, agentId))) throw notFound();
+			progress.deleted = true;
+			await this.audit(customer, ctx, 'agent.deleted', {
+				agentId,
+				revokedGrants: progress.grants.length,
+				revokedPaymentAddresses: progress.paymentAddresses.length,
+			});
+		} catch (error) {
+			progress.error =
+				error instanceof AgentServiceError ? error.message : 'The revocations could not be completed';
+			await this.audit(customer, ctx, 'agent.delete.failed', {
+				agentId,
+				revokedGrants: progress.grants.filter((grant) => grant.revoked).length,
+				revokedPaymentAddresses: progress.paymentAddresses.filter((binding) => binding.revoked).length,
+				reason: error instanceof Error ? error.message : 'unknown error',
+			});
+			console.error(`Deleting agent ${agentId} failed:`, error);
+			throw error;
+		}
 	}
 
 	// --- Cards --------------------------------------------------------------------------------------------

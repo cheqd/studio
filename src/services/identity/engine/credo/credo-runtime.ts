@@ -1,7 +1,8 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CheqdDidRegistrar, CheqdDidResolver, CheqdLedgerService, CheqdModule } from '@credo-ts/cheqd';
+import { CheqdDidResolver, CheqdLedgerService, CheqdModule } from '@credo-ts/cheqd';
+import { StudioCheqdDidRegistrar } from './studio-did-registrar.js';
 import {
 	Agent,
 	type AgentContext,
@@ -314,7 +315,11 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 				networks: options.networks,
 				resolvePayer: async ({ tenantId, network }) => options.resolvePayer({ tenantId, network }),
 			}),
-			dids: new DidsModule({ registrars: [new CheqdDidRegistrar()], resolvers: [new CheqdDidResolver()] }),
+			// Credo's registrar, signing key replacements with the keys the ledger SDK accepts (agent key rotation)
+			dids: new DidsModule({
+				registrars: [new StudioCheqdDidRegistrar()],
+				resolvers: [new CheqdDidResolver()],
+			}),
 		},
 	});
 	await agent.initialize();

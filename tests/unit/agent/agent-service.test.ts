@@ -162,6 +162,78 @@ describe('get, list, update, remove', () => {
 		expect(await statusOf(service.get(customerA, agent.agentId))).toBe(404);
 	});
 
+	it('revokes the entries of one status list in a single ledger write and says what it revoked', async () => {
+		const organisation = await seedOrganisationDid(world, customerA);
+		const agent = await service.register(customerA, { name: 'a', network: 'testnet', actsForDid: organisation });
+		await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+		await service.grantAuthority(customerA, agent.agentId, { grantType: 'tool-scope', tools: ['search'] });
+		await service.bindPaymentAddress(customerA, agent.agentId, {
+			account: 'eip155:1:0xab16a96D359eC26a11e2C2b3d8f8B8942d5Bfcdb',
+		});
+		const engine = await engineFor(customerA);
+		const writes: number[] = [];
+		const counting = new AgentService({
+			store,
+			statusListSize: 4,
+			engineFor: async () =>
+				new Proxy(engine, {
+					get(target, property, receiver) {
+						if (property !== 'setTokenStatus') return Reflect.get(target, property, receiver);
+						return (did: string, uri: string, updates: unknown[], customer: never) => {
+							writes.push(updates.length);
+							return target.setTokenStatus?.(did, uri, updates as never, customer);
+						};
+					},
+				}),
+		});
+
+		const result = await counting.remove(customerA, agent.agentId);
+		// Two lists (the organisation's, the agent's own for bindings): two writes, not three
+		expect(writes.sort()).toEqual([1, 2]);
+		expect(result).toMatchObject({ state: 'deleted', deleted: true, revokedGrants: 2, revokedPaymentAddresses: 1 });
+		expect(result.revoked.grants.map((grant) => grant.grantType).sort()).toEqual(['acts-for', 'tool-scope']);
+		expect(result.pending).toEqual({ grants: [], paymentAddresses: [] });
+		expect(await statusOf(service.get(customerA, agent.agentId))).toBe(404);
+	});
+
+	it('answers pending when the revocations outlast the wait, then finishes the delete in the background', async () => {
+		const organisation = await seedOrganisationDid(world, customerA);
+		const agent = await service.register(customerA, { name: 'a', network: 'testnet', actsForDid: organisation });
+		await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+		const engine = await engineFor(customerA);
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const slow = new AgentService({
+			store,
+			statusListSize: 4,
+			removalWaitMs: () => 10,
+			engineFor: async () =>
+				new Proxy(engine, {
+					get(target, property, receiver) {
+						if (property !== 'setTokenStatus') return Reflect.get(target, property, receiver);
+						return async (...args: Parameters<NonNullable<typeof engine.setTokenStatus>>) => {
+							await gate;
+							return target.setTokenStatus?.(...args);
+						};
+					},
+				}),
+		});
+
+		const first = await slow.remove(customerA, agent.agentId);
+		expect(first).toMatchObject({ state: 'pending', deleted: false, revokedGrants: 0 });
+		expect(first.pending.grants).toHaveLength(1);
+		// A retry while it runs reports on the same delete instead of starting another
+		expect((await slow.remove(customerA, agent.agentId)).state).toBe('pending');
+		expect((await service.get(customerA, agent.agentId)).status).toBe('active');
+
+		release();
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(await statusOf(service.get(customerA, agent.agentId))).toBe(404);
+		expect(store.audit.map((entry) => entry.action)).toContain('agent.deleted');
+	});
+
 	it('does not delete the agent when a live grant cannot be revoked', async () => {
 		const organisation = await seedOrganisationDid(world, customerA);
 		const agent = await service.register(customerA, { name: 'a', network: 'testnet', actsForDid: organisation });
