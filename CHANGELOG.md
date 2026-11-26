@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.21.0-develop.10](https://github.com/cheqd/studio/compare/3.21.0-develop.9...3.21.0-develop.10) (2026-11-26)
+
+### Bug Fixes
+
+* **credentials:** accept a pending offer when its credential is imported ([1cbf293](https://github.com/cheqd/studio/commit/1cbf29354a74327e7a99ad11ddd2296160215d0b))
+* **credentials:** give back the status list index of a failed issue ([9f193a5](https://github.com/cheqd/studio/commit/9f193a53d7786f4626ce150c2f22b0e063bcf90f))
+* **credentials:** import, JSON-LD issue and status list slot fixes ([#926](https://github.com/cheqd/studio/issues/926)) ([0fe47a6](https://github.com/cheqd/studio/commit/0fe47a693d7ed83836758a821badbb8d8285baa1))
+* **credentials:** return the full body of JSON-LD credentials ([392bc98](https://github.com/cheqd/studio/commit/392bc98551f1a26a077d2b606335c1e8ff9c004d))
+* **credo:** answer 400 for JSON-LD attributes no context defines ([e4c4825](https://github.com/cheqd/studio/commit/e4c48250ce1bf94e3f2c50a9add666ca126e8fbf))
+
 ## [3.21.0-develop.9](https://github.com/cheqd/studio/compare/3.21.0-develop.8...3.21.0-develop.9) (2026-11-25)
 
 ### Bug Fixes
