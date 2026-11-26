@@ -45,6 +45,24 @@ export class CredoExtraSignersNotSupportedError extends Error {
 	}
 }
 
+/**
+ * A JSON-LD credential could not be signed because some of its attributes are not defined by any of its `@context`
+ * entries. JSON-LD signing refuses such a document: the values of undefined terms would not be covered by the
+ * signature. The caller can fix it, so it answers 400 and names the attributes. Nothing was signed.
+ */
+export class CredoUndefinedTermsError extends Error {
+	readonly code = 'undefined_terms';
+	readonly status = 400;
+
+	constructor(readonly terms: string[]) {
+		const named = terms.length > 0 ? `: ${terms.join(', ')}` : '';
+		super(
+			`The credential has attributes that no @context defines${named}. A JSON-LD credential can only be signed when every attribute is defined by one of its contexts. Add a context that defines them to '@context' (for example "https://schema.org" defines name, email and jobTitle), rename the attributes to terms an existing context defines, or issue the credential in the 'jwt' format. Nothing was issued.`
+		);
+		this.name = 'CredoUndefinedTerms';
+	}
+}
+
 /** The caller asked for something that is not theirs, or that does not exist. Deliberately the same message for both. */
 export class CredoOwnershipError extends Error {
 	constructor(what: string) {

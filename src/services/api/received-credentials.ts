@@ -8,6 +8,7 @@ import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { VerificationOptions } from '../../types/shared.js';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { Credential } from '@veramo/data-store';
+import { computeEntryHash } from '@veramo/utils';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,6 +19,34 @@ const ACCREDITATION_TYPES = [
 	'VerifiableAccreditationToAttest',
 	'VerifiableAuthorizationForTrustChain',
 ];
+
+/** Sorted-key JSON, so two copies of the same object compare equal whatever order their keys were written in. */
+function stableStringify(value: unknown): string {
+	if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+	if (value && typeof value === 'object') {
+		const entries = Object.keys(value as Record<string, unknown>)
+			.sort()
+			.map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`);
+		return `{${entries.join(',')}}`;
+	}
+	return JSON.stringify(value) ?? 'null';
+}
+
+/**
+ * What identifies one signed credential: the compact JWT of a JWT credential, or the proof of a JSON-LD one. Undefined
+ * when the credential carries neither.
+ */
+export function credentialFingerprint(
+	credential: VerifiableCredential | string | undefined | null
+): string | undefined {
+	if (!credential) return undefined;
+	if (typeof credential === 'string') return `jwt:${credential.trim()}`;
+	const proof = (credential as { proof?: unknown }).proof;
+	if (!proof || typeof proof !== 'object') return undefined;
+	const jwt = (proof as { jwt?: unknown }).jwt;
+	if (typeof jwt === 'string') return `jwt:${jwt}`;
+	return `proof:${stableStringify(proof)}`;
+}
 
 export interface ListOffersOptions {
 	holderDid?: string;
@@ -481,8 +510,32 @@ export class ReceivedCredentials {
 				throw new Error('Credential subject does not match holder DID');
 			}
 
-			// Save to Veramo dataStore only
-			const credentialHash = await dataStore.saveCredential(parsedCredential, customer);
+			// The same credential may already be waiting for this holder as an offer (a credential issued by Studio to a
+			// DID Studio holds is stored as an offer). Importing it accepts that offer: the stored copy is the one kept,
+			// and saving it a second time under the same hash would fail.
+			const offer = await this.findPendingOfferFor(credential, holderDid);
+			if (offer?.veramoHash) {
+				offer.status = 'issued';
+				offer.subjectAcceptedAt = new Date();
+				await this.repository.save(offer);
+				return {
+					success: true,
+					credentialHash: offer.veramoHash,
+					credential: parsedCredential,
+				};
+			}
+
+			// Save to Veramo dataStore only. Importing a credential the store already holds is not an error: the stored
+			// copy is the same credential, so its hash is returned.
+			let credentialHash: string;
+			try {
+				credentialHash = await dataStore.saveCredential(parsedCredential, customer);
+			} catch (saveError) {
+				const hash = computeEntryHash(parsedCredential);
+				const stored = await dataStore.retrieveCredential(hash, customer).catch(() => null);
+				if (!stored) throw saveError;
+				credentialHash = hash;
+			}
 
 			return {
 				success: true,
@@ -495,6 +548,31 @@ export class ReceivedCredentials {
 			}
 			throw new Error(`Failed to import credential: ${error}`);
 		}
+	}
+
+	/**
+	 * The pending (`offered`) offer to `holderDid` that holds the same credential, or null. A JWT credential matches
+	 * on its compact JWT; a JSON-LD credential on its proof, whose signature is unique to the credential.
+	 */
+	private async findPendingOfferFor(
+		credential: VerifiableCredential | string,
+		holderDid: string
+	): Promise<IssuedCredentialEntity | null> {
+		const fingerprint = credentialFingerprint(credential);
+		if (!fingerprint) return null;
+		// Not filtered by customer: the issuer may be another account (as in acceptOffer)
+		const offers = await this.repository.find({
+			where: { subjectId: holderDid, status: 'offered' },
+			relations: ['veramoCredential'],
+		});
+		return (
+			offers.find(
+				(offer) =>
+					!!offer.veramoHash &&
+					credentialFingerprint(offer.veramoCredential?.raw as VerifiableCredential | undefined) ===
+						fingerprint
+			) ?? null
+		);
 	}
 
 	/**
