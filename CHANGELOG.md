@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.21.0-develop.11](https://github.com/cheqd/studio/compare/3.21.0-develop.10...3.21.0-develop.11) (2026-11-26)
+
+### Features
+
+* **admin:** audit every refused non-staff call to an admin route ([a051e38](https://github.com/cheqd/studio/commit/a051e388c833f4cbd14939e4619c57b691643db1))
+
+### Bug Fixes
+
+* **agents:** batch delete revocations and answer 202 when they run long ([1fbcc66](https://github.com/cheqd/studio/commit/1fbcc66a9f34426ca65534b4156fc15cda18bfa0))
+* **agents:** key rotation signer set and fast agent delete ([#928](https://github.com/cheqd/studio/issues/928)) ([295724d](https://github.com/cheqd/studio/commit/295724d215d8c8b47793c4f6804beacbb1af20d7)), closes [#key-2](https://github.com/cheqd/studio/issues/key-2)
+* **agents:** sign key rotations with the keys the cheqd SDK accepts ([cd24c10](https://github.com/cheqd/studio/commit/cd24c104ddd9747f307395e638018447b378d160))
+* **analytics:** say when the ledger index has not caught up ([f8d1011](https://github.com/cheqd/studio/commit/f8d1011ef16e4cb580f9ef3974f906483bbbe357))
+* trust-registry list cache, ledger analytics delay state and admin denial audit ([#927](https://github.com/cheqd/studio/issues/927)) ([e3eaf93](https://github.com/cheqd/studio/commit/e3eaf9349dc0b451c339fbab666d927dffbcc7ed))
+* **trust-registry:** cache accreditation content and stop a full cache ([1324508](https://github.com/cheqd/studio/commit/132450842324ebe65997f2120b09e42348512988))
+
 ## [3.21.0-develop.10](https://github.com/cheqd/studio/compare/3.21.0-develop.9...3.21.0-develop.10) (2026-11-26)
 
 ### Bug Fixes
