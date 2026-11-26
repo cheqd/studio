@@ -2,7 +2,149 @@
  * @openapi
  *
  * components:
+ *   parameters:
+ *     AnalyticsRange:
+ *       in: query
+ *       name: range
+ *       description: >-
+ *         Days to look back, counting today as whole UTC days, or `all` (from the UTC day of the first sign-up to
+ *         today). Do not combine with `from` and `to`.
+ *       schema:
+ *         type: string
+ *         enum: ['7', '30', '90', all]
+ *         default: '30'
+ *     AnalyticsFrom:
+ *       in: query
+ *       name: from
+ *       description: >-
+ *         First UTC day of a custom window (YYYY-MM-DD), with `to`. The window spans at most 400 days, both ends
+ *         included. Not with `range`.
+ *       schema:
+ *         type: string
+ *         format: date
+ *         example: '2026-10-01'
+ *     AnalyticsTo:
+ *       in: query
+ *       name: to
+ *       description: Last UTC day of a custom window (YYYY-MM-DD), included, with `from`.
+ *       schema:
+ *         type: string
+ *         format: date
+ *         example: '2026-10-31'
+ *     AnalyticsSegment:
+ *       in: query
+ *       name: segment
+ *       description: >-
+ *         `agents`: the customer has at least one non-deleted agent. `people`: no agents, but it has issued a
+ *         credential. `unclassified`: neither. `all`: no filter.
+ *       schema:
+ *         type: string
+ *         enum: [agents, people, unclassified, all]
+ *         default: all
  *   schemas:
+ *     AdminDayCount:
+ *       type: object
+ *       properties:
+ *         date:
+ *           type: string
+ *           example: '2026-11-13'
+ *         count:
+ *           type: integer
+ *     AdminCustomer:
+ *       type: object
+ *       properties:
+ *         id: { type: string, format: uuid }
+ *         name: { type: string, description: 'Masked like email when the name is an email address.' }
+ *         email:
+ *           type: string
+ *           example: 'a•••@example.com'
+ *           description: 'Masked. The full address is only returned by POST /admin/customers/{id}/email-reveal, which is audited.'
+ *         plan: { type: string, example: Build }
+ *         network: { type: string, enum: [mainnet, testnet] }
+ *         createdAt: { type: string, format: date-time }
+ *         lastActiveAt: { type: string, format: date-time, nullable: true }
+ *         status: { type: string, enum: [active, inactive] }
+ *         usage:
+ *           type: object
+ *           properties:
+ *             apiCalls30d: { type: integer }
+ *             identifiers: { type: integer }
+ *             credentials: { type: integer }
+ *             keys: { type: integer, deprecated: true, description: 'Deprecated: the count of DID keys. Use didKeys.' }
+ *             didKeys: { type: integer, description: 'DID keys held by the customer.' }
+ *             apiKeys: { type: integer, description: 'API keys that are not revoked.' }
+ *     AdminCustomerDetail:
+ *       allOf:
+ *         - $ref: '#/components/schemas/AdminCustomer'
+ *         - type: object
+ *           properties:
+ *             paymentPlan: { type: string, example: active }
+ *             agentCount: { type: integer }
+ *             segment: { type: string, enum: [agents, people, unclassified] }
+ *             milestones:
+ *               $ref: '#/components/schemas/AdminCustomerMilestones'
+ *     AdminCustomerMilestones:
+ *       type: object
+ *       description: >-
+ *         When the customer first reached each milestone, or null if it has not yet. Recorded once, when the event
+ *         happens; dates from before recording started come from a backfill over existing data.
+ *       properties:
+ *         firstIdentifierAt: { type: string, format: date-time, nullable: true, description: 'First DID created.' }
+ *         firstAgentAt: { type: string, format: date-time, nullable: true, description: 'First agent registered.' }
+ *         firstApiKeyAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First API key the customer created itself; portal session keys do not count.
+ *         firstCredentialIssuedAt: { type: string, format: date-time, nullable: true }
+ *         firstStatusListAt: { type: string, format: date-time, nullable: true }
+ *         firstFaucetRequestAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First faucet request that credited the account.
+ *         firstApiCallAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First tracked operation of any kind.
+ *     AdminFunnelStep:
+ *       type: object
+ *       properties:
+ *         key: { type: string, example: first-api-key }
+ *         label: { type: string, example: First API key }
+ *         accounts: { type: integer }
+ *         medianSecondsFromPrevious: { type: integer, nullable: true }
+ *     AdminStalledAccounts:
+ *       type: object
+ *       properties:
+ *         journey: { type: string, enum: [first-credential, first-agent, first-api-call] }
+ *         step: { type: string, example: first-did }
+ *         stepLabel: { type: string, example: First DID created }
+ *         previousStep: { type: string, example: funded }
+ *         previousStepLabel: { type: string, example: Funded address }
+ *         range: { description: 'The days of a preset window (7, 30 or 90, a number), or all, or custom.', example: 30 }
+ *         from: { type: string, format: date, nullable: true, description: 'Null for range=all.' }
+ *         to: { type: string, format: date }
+ *         segment: { type: string, enum: [agents, people, unclassified, all] }
+ *         page: { type: integer }
+ *         limit: { type: integer }
+ *         total: { type: integer, description: 'Stalled accounts across all pages.' }
+ *         accounts:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               ref:
+ *                 type: string
+ *                 description: Short opaque reference, stable across pages and calls. Not the customer id.
+ *                 example: acct_3f9a1c07b2d4
+ *               signedUpAt: { type: string, format: date-time }
+ *               lastActiveAt:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
+ *                 description: Last tracked operation, or null if none.
  *     PriceListResponseBody:
  *       description: A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)
  *       type: object
@@ -204,13 +346,17 @@
  *           type: boolean
  *           description: The status of the API key
  *           example: false
+ *         expired:
+ *           type: boolean
+ *           description: Whether the expiry has passed, by the server clock (UTC). An expired key is rejected with 401 on every request.
+ *           example: false
  *     APIKeyCreateRequestBody:
  *       description: The request body for creating an API key
  *       type: object
  *       properties:
  *         expiresAt:
  *           type: string
- *           description: The expiration date of the API key
+ *           description: The expiration date of the API key. Optional on creation; when omitted the key expires 30 days after creation. It must be in the future and no more than 730 days ahead (the server's `API_KEY_MAX_EXPIRATION_DAYS` setting, default 730); otherwise the request is rejected with 400. A key stops authenticating, with 401, at this instant.
  *           example: "2000-10-31T01:23:45Z"
  *           format: date-time
  *         name:
@@ -244,7 +390,7 @@
  *           example: My API Key
  *         expiresAt:
  *           type: string
- *           description: The expiration date of the API key
+ *           description: The new expiration date of the API key. It must be in the future and no more than 730 days ahead (`API_KEY_MAX_EXPIRATION_DAYS`, default 730).
  *           example: 2000-10-31T01:23:45Z
  *           format: date-time
  *         revoked:

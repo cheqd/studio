@@ -16,18 +16,23 @@ declare global {
 			RESOLVER_URL: string;
 			APPLICATION_BASE_URL: string | 'http://localhost:3000';
 			CORS_ALLOWED_ORIGINS: string | APPLICATION_BASE_URL;
+			PROVIDER_ENDPOINT_ALLOWED_HOSTS?: string;
 			ENABLE_EXTERNAL_DB: string | 'false';
 			EXTERNAL_DB_CONNECTION_URL: string;
 			EXTERNAL_DB_ENCRYPTION_KEY: string;
 			EXTERNAL_DB_CERT: string | undefined;
 			API_KEY_EXPIRATION: number;
+			API_KEY_MAX_ACTIVE_PER_CUSTOMER?: string;
 
 			// LogTo
 			LOGTO_ENDPOINT: string;
 			LOGTO_APP_ID: string;
 			LOGTO_APP_SECRET: string;
 			LOGTO_CLI_APP_IDS?: string;
+			PORTAL_APP_IDS?: string;
+			SHUTDOWN_GRACE_SECONDS?: string;
 			LOGTO_DEFAULT_RESOURCE_URL: string;
+			M2M_CLIENT_CUSTOMER_MAP?: string;
 			LOGTO_M2M_APP_ID: string;
 			LOGTO_M2M_APP_SECRET: string;
 			LOGTO_MANAGEMENT_API: string;
@@ -39,6 +44,10 @@ declare global {
 			// Authentication
 			ENABLE_AUTHENTICATION: string | 'false';
 			COOKIE_SECRET: string;
+			ENABLE_M2M_CUSTOMER_PATH?: string;
+
+			// Portal credential screens: history counts only before this ISO date (the release date)
+			CREDENTIAL_SCREENS_HISTORY_CUTOFF?: string;
 
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';

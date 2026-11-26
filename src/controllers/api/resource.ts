@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
@@ -24,6 +25,8 @@ import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { ledgerErrorCode, recordFailedLedgerWrite } from '../../helpers/ledger-write-failure.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -166,13 +169,43 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
 	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async createResource(request: Request, response: Response) {
 		// Extract the did from the request
-		let did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
+		const did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
 		// Extract the resource parameters from the request
 		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
 			request.body as CreateResourceRequestBody;
@@ -209,12 +242,10 @@ export class ResourceController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await identityServiceStrategySetup.agent.createResource(
-				network || did.split(':')[2],
-				resourcePayload,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			// A resource is written under an existing DID, so the DID's recorded engine decides
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', { kind: 'did', id: did })
+			).createResource(network || did.split(':')[2], resourcePayload, response.locals.customer, publicKeyHexs);
 
 			if (result) {
 				const url = new URL(
@@ -247,15 +278,31 @@ export class ResourceController {
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.RESOURCE,
+					name: OperationNameEnum.RESOURCE_CREATE,
+					customer: response.locals.customer,
+					did,
+				},
+				error
+			);
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
 					error: unfunded.error,
+					code: unfunded.code,
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
+				...ledgerErrorCode(ledgerFailure),
 			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 	}
@@ -266,8 +313,9 @@ export class ResourceController {
 	 * /resource/search/{did}:
 	 *   get:
 	 *     tags: [ DID-Linked Resources (DLRs) ]
+	 *     security: []
 	 *     summary: Get a DID-Linked Resource.
-	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.
+	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier. Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
@@ -330,8 +378,26 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async searchResource(request: Request, response: Response) {
@@ -356,6 +422,8 @@ export class ResourceController {
 				} satisfies UnsuccessfulQueryResourceResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulQueryResourceResponseBody);
@@ -434,8 +502,26 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async listResources(request: Request, response: Response) {
 		// Extract params, filters and pagination
@@ -445,7 +531,9 @@ export class ResourceController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', did ? { kind: 'did', id: did } : undefined)
+			).listResources(
 				{
 					did,
 					encrypted,
@@ -461,6 +549,8 @@ export class ResourceController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetDidResponseBody);

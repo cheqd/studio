@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
+import { alreadyAppliedOnRetry } from '../../helpers';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -56,7 +57,7 @@ test(" Verify a Accreditation's status", async ({ request }) => {
 	expect(result.message).toBe('valid');
 });
 
-test(' Suspend and Verify an accreditation', async ({ request }) => {
+test(' Suspend and Verify an accreditation', async ({ request }, testInfo) => {
 	const response = await request.post(`/trust-registry/accreditation/suspend?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -67,12 +68,14 @@ test(' Suspend and Verify an accreditation', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.updated).toBe(true);
-	expect(result.statusValue).toBe(2);
-	expect(result.statusMessage).toBe('suspended');
-	expect(result.published).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.updated).toBe(true);
+		expect(result.statusValue).toBe(2);
+		expect(result.statusMessage).toBe('suspended');
+		expect(result.published).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/trust-registry/accreditation/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -92,7 +95,7 @@ test(' Suspend and Verify an accreditation', async ({ request }) => {
 	expect(verificationResult.message).toBe('suspended');
 });
 
-test(' Reinstate and Verify an accreditation', async ({ request }) => {
+test(' Reinstate and Verify an accreditation', async ({ request }, testInfo) => {
 	const response = await request.post(`/trust-registry/accreditation/reinstate?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -103,12 +106,14 @@ test(' Reinstate and Verify an accreditation', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.updated).toBe(true);
-	expect(result.statusValue).toBe(0);
-	expect(result.statusMessage).toBe('valid');
-	expect(result.published).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.updated).toBe(true);
+		expect(result.statusValue).toBe(0);
+		expect(result.statusMessage).toBe('valid');
+		expect(result.published).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/trust-registry/accreditation/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -128,7 +133,7 @@ test(' Reinstate and Verify an accreditation', async ({ request }) => {
 	expect(verificationResult.message).toBe('valid');
 });
 
-test(' Revoke and Verify an Accreditation', async ({ request }) => {
+test(' Revoke and Verify an Accreditation', async ({ request }, testInfo) => {
 	const response = await request.post(`/trust-registry/accreditation/revoke?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -139,12 +144,14 @@ test(' Revoke and Verify an Accreditation', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.updated).toBe(true);
-	expect(result.statusValue).toBe(1);
-	expect(result.statusMessage).toBe('revoked');
-	expect(result.published).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.updated).toBe(true);
+		expect(result.statusValue).toBe(1);
+		expect(result.statusMessage).toBe('revoked');
+		expect(result.published).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/trust-registry/accreditation/verify?verifyStatus=true`, {
 		data: JSON.stringify({

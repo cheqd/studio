@@ -10,6 +10,10 @@ import {
 	type CredentialRequest,
 } from '../../types/credential.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import type { RoutedService } from '../identity/index.js';
+import { credentialArtifact, didArtifact } from '../identity/engine/artifact-refs.js';
+import { DbArtifactEngineLookup } from '../identity/engine/db-lookups.js';
+import { CredoNotSupportedError } from '../identity/engine/credo/errors.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -18,7 +22,8 @@ import { ResourceConnector } from '../connectors/resource.js';
 import { DockIdentityService } from '../identity/providers/index.js';
 import { ProviderService } from './provider.service.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 
@@ -43,6 +48,25 @@ dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
 
+/** A status list index handed out for one credential, and the write cursor before it was handed out. */
+export interface StatusIndexReservation {
+	index: number;
+	registryId: string;
+	previousCursor: number;
+}
+
+/** What `issueWithRecord` needs to know to give an index back when the issue fails. */
+interface StatusIndexReservationTracker {
+	current?: StatusIndexReservation;
+	/** False once the index may be in use: the credential was signed, or a row naming the index was kept. */
+	releasable: boolean;
+}
+
+/** The base credentials context first, then the caller's contexts, without duplicates. */
+export function credentialContexts(context: string[] | undefined): string[] {
+	return [...new Set([...VC_CONTEXT, ...(context || [])])];
+}
+
 export class Credentials {
 	public static instance = new Credentials();
 	public repository: Repository<IssuedCredentialEntity>;
@@ -54,6 +78,40 @@ export class Credentials {
 	}
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
+		return (await this.issueWithRecord(request, customer)).credential;
+	}
+
+	/**
+	 * Issues the credential and also returns the id of the Studio record that tracks it (`issuedCredentialId`), which
+	 * is the id `GET /credentials/issued/:id` expects. The credential itself carries no such id.
+	 *
+	 * A status list index reserved for a credential that was never signed is given back when the issue fails, so a
+	 * failed request does not count as a used entry of the list (see `releaseStatusIndex`).
+	 */
+	async issueWithRecord(
+		request: CredentialRequest,
+		customer: CustomerEntity
+	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
+		const reservation: StatusIndexReservationTracker = { releasable: true };
+		try {
+			return await this.issueAndRecord(request, customer, reservation);
+		} catch (error) {
+			if (reservation.current && reservation.releasable) {
+				await this.releaseStatusIndex(reservation.current).catch((releaseError) =>
+					console.warn(
+						`Could not release status list index ${reservation.current?.index} of registry ${reservation.current?.registryId}: ${(releaseError as Error)?.message}`
+					)
+				);
+			}
+			throw error;
+		}
+	}
+
+	private async issueAndRecord(
+		request: CredentialRequest,
+		customer: CustomerEntity,
+		reservation: StatusIndexReservationTracker
+	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
 		const {
 			attributes,
 			credentialName,
@@ -75,7 +133,8 @@ export class Credentials {
 		} = request;
 
 		const credential: CredentialPayload = {
-			'@context': [...(context || []), ...VC_CONTEXT],
+			// The VC Data Model requires the base credentials context first; Credo rejects any other order.
+			'@context': credentialContexts(context),
 			type: [...new Set([...(type || []), VC_TYPE])],
 			issuer: { id: issuerDid },
 			credentialSchema,
@@ -92,15 +151,24 @@ export class Credentials {
 		}
 
 		const statusOptions = credentialStatus || null;
+		// The documented default is VC-JWT. Veramo signed anything other than `jsonld` as a JWT; Credo needs the format
+		// named, so the default is made explicit here (and recorded on the row as what was actually signed).
+		const signingFormat = format || 'jwt';
+
+		// Refused before anything is reserved or signed: an offer to another account's Credo DID would be silently
+		// dropped (see assertSubjectCanBeOffered)
+		if ((providerId || connector) !== CredentialConnectors.Dock)
+			await this.assertSubjectCanBeOffered(subjectDid, customer);
 
 		// Phase 1: Atomic Index Reservation with CAS
 		let reservedIndex: number | undefined;
 		let statusRegistryId: string | undefined;
 		if (statusOptions && !issuedCredentialId) {
 			// Reserve index atomically using CAS pattern
-			const reservation = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
-			reservedIndex = reservation.index;
-			statusRegistryId = reservation.registryId;
+			const reserved = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
+			reservation.current = reserved;
+			reservedIndex = reserved.index;
+			statusRegistryId = reserved.registryId;
 
 			// Do not allow the issuer to override with a different index
 			if (statusOptions.statusListIndex && statusOptions.statusListIndex !== reservedIndex) {
@@ -112,6 +180,17 @@ export class Credentials {
 
 		// Phase 2: Create tracking record immediately to reserve the index
 		// This ensures the index is tracked even if credential creation fails
+		// The engine that will sign the credential is decided once, here, and recorded on the row. Dock-issued
+		// credentials never reach an identity engine, so they keep the default. The issuer DID's recorded engine decides,
+		// so a credential is signed by the engine that holds the issuer's keys; only an issuer Studio has no record of
+		// falls back to the `credential` flag.
+		const isDockConnector = (providerId || connector) === CredentialConnectors.Dock;
+		const credentialEngine = isDockConnector
+			? undefined
+			: await new IdentityServiceStrategySetup(customer.customerId).engine('credential', didArtifact(issuerDid), {
+					flagWhenUnrecorded: true,
+				});
+
 		let trackingRecord: IssuedCredentialEntity;
 		if (issuedCredentialId) {
 			const existingRecord = await this.fetch(issuedCredentialId, customer);
@@ -127,7 +206,11 @@ export class Credentials {
 				providerId: providerId || 'studio',
 				issuerId: issuerDid,
 				subjectId: subjectDid,
-				format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
+				format: (isDockConnector ? format || 'jsonld' : signingFormat) as
+					| 'jwt'
+					| 'jsonld'
+					| 'sd-jwt-vc'
+					| 'anoncreds',
 				category: category || CredentialCategory.CREDENTIAL,
 				type: type || ['VerifiableCredential'],
 				status: 'issued',
@@ -135,10 +218,12 @@ export class Credentials {
 				statusRegistryId: statusRegistryId,
 				statusIndex: reservedIndex,
 				retryCount: 0,
+				engine: credentialEngine?.name,
 			});
 		}
 
 		// Phase 3: Attempt credential creation with error handling
+		let publishedToConnector = false;
 		try {
 			let verifiableCredential: VerifiableCredential;
 			let providerCredentialId: string | undefined;
@@ -153,12 +238,17 @@ export class Credentials {
 					const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
 					if (!existingIssuer) {
 						// export from wallet
-						const exportResult = await new IdentityServiceStrategySetup(
-							customer.customerId
-						).agent.exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
+						const exportResult = await (
+							await new IdentityServiceStrategySetup(customer.customerId).routed('did', {
+								kind: 'did',
+								id: issuerDid,
+							})
+						).exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
 						// import into provider
 						await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
 					}
+					// A remote issuer may have issued even when the call fails, so its index is never given back
+					reservation.releasable = false;
 					const dockCredential = await dock.createCredential(credential, format, statusOptions, customer);
 					verifiableCredential = dockCredential;
 					providerCredentialId = dockCredential.id as string;
@@ -166,7 +256,7 @@ export class Credentials {
 						schema: dockCredential.credentialSchema,
 						proof: dockCredential.proof,
 						termsOfUse: additionalData.termsOfUse,
-						contexts: [...(context || []), ...VC_CONTEXT],
+						contexts: credentialContexts(context),
 					};
 					break;
 				}
@@ -175,12 +265,19 @@ export class Credentials {
 				case CredentialConnectors.Verida:
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					const verifiable_credential = await studioService.agent.createCredential(
-						credential,
-						format,
-						statusOptions,
+					const verifiable_credential = (await (
+						(credentialEngine ??
+							(await studioService.engine('credential', didArtifact(issuerDid), {
+								flagWhenUnrecorded: true,
+							}))) as unknown as RoutedService
+					).createCredential(
+						credential as never,
+						signingFormat,
+						statusOptions as never,
 						customer
-					);
+					)) as unknown as VerifiableCredential;
+					// Signed: the credential carries the index from here on, so it stays used even if a later step fails
+					reservation.releasable = false;
 
 					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 					let sendCredentialResponse;
@@ -217,6 +314,8 @@ export class Credentials {
 						);
 					}
 
+					if (sendCredentialResponse) publishedToConnector = true;
+
 					// Get resourceId from ResourceConnector response if available
 					if (sendCredentialResponse && sendCredentialResponse.resourceId) {
 						providerCredentialId = sendCredentialResponse.resourceId;
@@ -225,7 +324,9 @@ export class Credentials {
 					}
 
 					// Check if subject DID exists in Veramo's identifier store
-					isSubjectInDatabase = await studioService.agent.didExists(subjectDid, customer);
+					isSubjectInDatabase = await (
+						await studioService.routed('did', { kind: 'did', id: subjectDid })
+					).didExists(subjectDid, customer);
 
 					// If subject DID is in database, store credential in Veramo's dataStore
 					if (isSubjectInDatabase) {
@@ -242,7 +343,10 @@ export class Credentials {
 						resourceType: sendCredentialResponse?.resourceType,
 						didUrl: sendCredentialResponse?.didUrl,
 						termsOfUse: additionalData.termsOfUse,
-						contexts: [...(context || []), ...VC_CONTEXT],
+						contexts: credentialContexts(context),
+						// A JWT credential can be rebuilt from `proof.jwt`; a JSON-LD one cannot, so the signed document
+						// is kept whole (see `IssuedCredentialResponse.providerMetadata.credential`)
+						...(signingFormat === 'jsonld' ? { credential: verifiable_credential } : {}),
 					};
 					verifiableCredential = verifiable_credential;
 					break;
@@ -300,10 +404,22 @@ export class Credentials {
 			// Also update fields not covered by the update() method
 			await this.repository.update({ issuedCredentialId: trackingRecord.issuedCredentialId }, updatePayload);
 
-			return verifiableCredential;
+			return { credential: verifiableCredential, issuedCredentialId: trackingRecord.issuedCredentialId };
 		} catch (error) {
-			// Phase 5: Update tracking record with failure details
-			// This ensures the reserved index is tracked even when credential creation fails
+			// Phase 5: a row this call created, for a credential that was never published, is removed, and no
+			// `unknown` row is left for a request that failed. Its index is given back by `issueWithRecord` when
+			// nothing was signed with it. A row that existed before this call, or one whose credential reached a
+			// resource connector, is kept and marked `unknown` with the failure.
+			if (!issuedCredentialId && !publishedToConnector) {
+				const removed = await this.repository
+					.delete({ issuedCredentialId: trackingRecord.issuedCredentialId })
+					.then(() => true)
+					.catch(() => false);
+				// The row could not be removed: fall through and record the failure on it instead
+				if (removed) throw error;
+			}
+			// The row stays and still names the index, so the index is not handed out again
+			reservation.releasable = false;
 			await this.repository.update(
 				{ issuedCredentialId: trackingRecord.issuedCredentialId },
 				{
@@ -318,6 +434,28 @@ export class Credentials {
 		}
 	}
 	/**
+	 * A credential issued to a DID that Studio holds becomes an offer the holder accepts. The check uses the subject
+	 * DID's engine scoped to the issuing account: Veramo finds a DID of any account, so an offer to another account's
+	 * Veramo DID is created, but Credo only sees the issuer's own DIDs, so an offer to another account's Credo DID
+	 * was skipped and the credential silently recorded as `issued`. Until cross-account offers are built for Credo,
+	 * that case is refused with 501 before an index is reserved or anything is signed (U-59). A DID outside Studio,
+	 * the issuer's own DID and every Veramo DID behave as before.
+	 */
+	private async assertSubjectCanBeOffered(subjectDid: string | undefined, customer: CustomerEntity): Promise<void> {
+		if (!subjectDid?.startsWith('did:cheqd:')) return;
+		// Only a DID recorded as Credo's counts: routing alone may pick Credo for a DID Studio has never seen
+		if ((await new DbArtifactEngineLookup().recordedEngine({ kind: 'did', id: subjectDid })) !== 'credo') return;
+		const subjectService = await new IdentityServiceStrategySetup(customer.customerId).routed('did', {
+			kind: 'did',
+			id: subjectDid,
+		});
+		if (await subjectService.didExists(subjectDid, customer)) return;
+		throw new CredoNotSupportedError(
+			'offering a credential to a DID held by another Studio account yet. Nothing was issued. Issue the credential to a DID of this account or to a DID outside Studio'
+		);
+	}
+
+	/**
 	 * Phase 1: Atomic Index Reservation with CAS
 	 * Reserves a unique index using Compare-And-Swap pattern
 	 * Implements lock-free allocation with exponential backoff retry
@@ -327,7 +465,7 @@ export class Credentials {
 		issuerDid: string,
 		customer: CustomerEntity,
 		maxRetries: number = 5
-	): Promise<{ index: number; registryId: string }> {
+	): Promise<StatusIndexReservation> {
 		let attempt = 0;
 		const baseDelay = 5; // ms
 
@@ -448,7 +586,11 @@ export class Credentials {
 					eventTracker.emit('track', trackInfo);
 				}
 
-				return { index: nextIndex, registryId: statusRegistry.registryId };
+				return {
+					index: nextIndex,
+					registryId: statusRegistry.registryId,
+					previousCursor: statusRegistry.writeCursor,
+				};
 			}
 
 			// CAS failed - concurrent modification detected
@@ -461,6 +603,36 @@ export class Credentials {
 		}
 
 		throw new Error(`Failed to reserve index after ${maxRetries} attempts - high concurrency`);
+	}
+
+	/**
+	 * Gives back an index `reserveStatusIndex` handed out for a credential that was never signed, so a failed issue
+	 * does not count as a used entry of the list. Only the latest reservation can be given back: the write cursor
+	 * moves back to where it was only while it still points at this index (compare-and-swap on the cursor and the
+	 * version). If another issue has reserved an index since, this one stays consumed, which is safe (nothing reuses
+	 * it) and only costs one unused entry; so does a list the reservation filled. Returns whether the index was given
+	 * back.
+	 */
+	async releaseStatusIndex(reservation: StatusIndexReservation, maxRetries: number = 5): Promise<boolean> {
+		for (let attempt = 0; attempt < maxRetries; attempt++) {
+			const registry = await this.statusRegistryRepository.findOne({
+				where: { registryId: reservation.registryId },
+			});
+			if (!registry || registry.writeCursor !== reservation.index) return false;
+			// A list the reservation filled may already have been rotated; it is left as it is
+			if (registry.state !== StatusRegistryState.Active) return false;
+
+			const result = await this.statusRegistryRepository
+				.createQueryBuilder()
+				.update(StatusRegistryEntity)
+				.set({ writeCursor: reservation.previousCursor, version: registry.version + 1, updatedAt: new Date() })
+				.where('registryId = :registryId', { registryId: registry.registryId })
+				.andWhere('version = :version', { version: registry.version })
+				.andWhere('writeCursor = :writeCursor', { writeCursor: reservation.index })
+				.execute();
+			if ((result.affected ?? 0) === 1) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -571,14 +743,16 @@ export class Credentials {
 			});
 		}
 
-		// Strategy 3: Search across all provider fields
+		// Strategy 3: Search across all provider fields. A credential id is often written as a URN
+		// (`urn:uuid:<uuid>`) in the credential and as the bare uuid by callers, so both spellings are tried.
 		if (!entity) {
+			const bare = id.replace(/^urn:uuid:/i, '');
 			entity = await this.repository.findOne({
 				where: {
-					providerCredentialId: id,
+					providerCredentialId: In([id, bare, `urn:uuid:${bare}`]),
 					customer: { customerId: customer.customerId },
 				},
-				relations: ['customer'],
+				relations: ['customer', 'statusRegistry'],
 			});
 		}
 		if (!entity) {
@@ -604,6 +778,10 @@ export class Credentials {
 		let credential: VerifiableCredential | null = null;
 		if (includeCredential) {
 			credential = await this.fetchCredentialFromProvider(entity);
+			// A JSON-LD credential that was not published anywhere is only kept on its row
+			if (!credential && entity.metadata?.credential && typeof entity.metadata.credential === 'object') {
+				credential = entity.metadata.credential as VerifiableCredential;
+			}
 		}
 		return this.toResponse(entity, { includeCredential, credential: credential ?? undefined });
 	}
@@ -642,7 +820,63 @@ export class Credentials {
 			}
 		);
 
+		// Record the engine that actually created the credential, so later operations route back to it
+		if (options.engine) entity.engine = options.engine;
+
 		return await this.repository.save(entity);
+	}
+
+	/**
+	 * After a revoke, suspend or reinstate has really changed the status list, mirror it on the tracking rows of the
+	 * credential, so the issued-credentials API reports `revoked` or `suspended` instead of the status the row was
+	 * issued with. Best effort: the status list is the source of truth and a failure here is logged, never raised.
+	 * Rows are found by customer, issuer, status index and the status entry's id.
+	 */
+	async recordStatusChange(
+		credential: unknown,
+		action: 'revoke' | 'suspend' | 'reinstate',
+		customer: CustomerEntity
+	): Promise<number> {
+		try {
+			const decoded =
+				typeof credential === 'string'
+					? ((await Cheqd.decodeCredentialJWT(credential)) as unknown as Record<string, any>)
+					: (credential as Record<string, any>);
+			const issuer = typeof decoded?.issuer === 'string' ? decoded.issuer : decoded?.issuer?.id;
+			const raw = decoded?.credentialStatus;
+			const entries: Record<string, any>[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+			if (!issuer || entries.length === 0) return 0;
+
+			let changed = 0;
+			for (const entry of entries) {
+				const index = Number.parseInt(String(entry.statusListIndex ?? entry.statusIndex), 10);
+				if (!Number.isFinite(index)) continue;
+				const rows = await this.repository.find({
+					where: { customer: { customerId: customer.customerId }, issuerId: issuer, statusIndex: index },
+				});
+				for (const row of rows) {
+					const stored = ([] as Record<string, any>[]).concat(row.credentialStatus ?? []);
+					if (!stored.some((s) => s?.id === entry.id)) continue;
+					const status =
+						action === 'revoke'
+							? 'revoked'
+							: action === 'suspend'
+								? 'suspended'
+								: row.offerExpiresAt && !row.subjectAcceptedAt
+									? 'offered'
+									: 'issued';
+					await this.repository.update(
+						{ issuedCredentialId: row.issuedCredentialId },
+						{ status: status as IssuedCredentialEntity['status'], statusUpdatedAt: new Date() }
+					);
+					changed += 1;
+				}
+			}
+			return changed;
+		} catch (error) {
+			console.warn(`Could not mirror the ${action} on the issued credential row: ${(error as Error)?.message}`);
+			return 0;
+		}
 	}
 
 	/**
@@ -683,11 +917,19 @@ export class Credentials {
 			return null;
 		}
 
-		// Update the entity
-		const updatePayload: any = {
-			...updateData,
-			updatedAt: new Date(),
-		};
+		// Update the entity. Only the allow-listed fields are copied: the caller's object is never spread into the update.
+		const updatePayload: Partial<IssuedCredentialEntity> = { updatedAt: new Date() };
+		if (updateData.providerCredentialId !== undefined)
+			updatePayload.providerCredentialId = updateData.providerCredentialId;
+		if (updateData.status !== undefined) updatePayload.status = updateData.status;
+		if (updateData.metadata !== undefined) {
+			// Server-written migration bookkeeping is not caller-controlled
+			const migratedFrom = entity.metadata?.migratedFrom;
+			updatePayload.metadata = {
+				...updateData.metadata,
+				...(migratedFrom !== undefined ? { migratedFrom } : {}),
+			};
+		}
 
 		// If status is being updated, also update statusUpdatedAt
 		if (updateData.status) {
@@ -811,9 +1053,14 @@ export class Credentials {
 					if (entity.credentialStatus) {
 						const status = entity.credentialStatus;
 						const studioService = new IdentityServiceStrategySetup(customer.customerId);
+						// The credential row is known, so its recorded engine decides
+						const statusEngine = await studioService.routed(
+							'status-list',
+							credentialArtifact(entity.issuedCredentialId)
+						);
 						if (status.type === 'StatusList2021Entry') {
 							const url = new URL(status.id);
-							const currentStatus = await studioService.agent.checkStatusList2021(
+							const currentStatus = await statusEngine.checkStatusList2021(
 								entity.issuerId || '',
 								{
 									...status,
@@ -827,7 +1074,7 @@ export class Credentials {
 								newStatus = currentStatus.revoked ? 'revoked' : 'issued';
 							}
 						} else {
-							const currentStatus = (await studioService.agent.checkBitstringStatusList(
+							const currentStatus = (await statusEngine.checkBitstringStatusList(
 								entity.issuerId || '',
 								status as CheqdCredentialStatus,
 								customer
@@ -885,7 +1132,9 @@ export class Credentials {
 				}
 				case 'studio': {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					return await studioService.agent.getCredential(credentialId, customer);
+					return await (
+						await studioService.routed('credential', credentialArtifact(entity.issuedCredentialId))
+					).getCredential(credentialId, customer);
 				}
 				default:
 					console.warn(`Credential fetch not supported for provider: ${entity.providerId}`);
@@ -908,7 +1157,9 @@ export class Credentials {
 		let verificationResult: IVerifyResult;
 
 		const studioService = new IdentityServiceStrategySetup(customer.customerId);
-		verificationResult = await studioService.agent.verifyCredential(credential, verificationOptions, customer);
+		verificationResult = (await (
+			await studioService.routed('credential')
+		).verifyCredential(credential as never, verificationOptions as never, customer)) as unknown as IVerifyResult;
 
 		// Only check external providers if customer is authenticated
 		if (verificationOptions.policies?.checkExternalProvider) {

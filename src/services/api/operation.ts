@@ -9,6 +9,18 @@ import type { CoinEntity } from '../../database/entities/coin.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 dotenv.config();
 
+/** The routing columns of an `operation` row. All optional: a request that never reached the router has none. */
+export interface OperationRouting {
+	engine?: string;
+	network?: string;
+	outcome?: string;
+	durationMs?: number;
+	/** How the caller authenticated (`api-key`, `portal`, `id-token`, `m2m`, `swagger-ui`); empty outside a request */
+	authMethod?: string;
+	/** Only for a failed ledger write (U-30); see `OperationEntity.errorCategory`. */
+	errorCategory?: string;
+}
+
 export class OperationService {
 	public operationRepository: Repository<OperationEntity>;
 
@@ -21,10 +33,11 @@ export class OperationService {
 	public async create(
 		category: string,
 		operationName: string,
-		defaultFee: CoinEntity,
+		defaultFee: CoinEntity | undefined,
 		deprecated = false,
 		successful = true,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		routing: OperationRouting = {}
 	): Promise<OperationEntity> {
 		if (!category) {
 			throw new Error('Operation category is not specified');
@@ -42,6 +55,13 @@ export class OperationService {
 			successful,
 			customer
 		);
+		// Filled when the request went through the engine router (engine spec 4.3); null otherwise
+		operationEntity.engine = routing.engine;
+		operationEntity.network = routing.network;
+		operationEntity.outcome = routing.outcome;
+		operationEntity.durationMs = routing.durationMs;
+		operationEntity.authMethod = routing.authMethod;
+		operationEntity.errorCategory = routing.errorCategory;
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
@@ -94,6 +114,8 @@ export class OperationService {
 	) {
 		return await this.operationRepository.findAndCount({
 			where: where,
+			// Newest first; the id breaks ties between rows with the same timestamp, so pages never overlap
+			order: { createdAt: 'DESC', operationId: 'DESC' },
 			skip: page && limit ? (page - 1) * limit : 0,
 			take: limit,
 			relations,

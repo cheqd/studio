@@ -1,0 +1,46 @@
+{
+	"schema": 1,
+	"stepId": "key-create",
+	"routeId": "POST /key/create",
+	"tier": 2,
+	"effect": "state-database",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.134Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/key/create",
+			"query": {
+				"type": "Ed25519"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"createdAt": "<timestamp>",
+				"customer": {
+					"createdAt": "<timestamp>",
+					"customerId": "<uuid:1>",
+					"description": null,
+					"email": "<email>",
+					"name": "<email>",
+					"paymentProviderId": "cus_VWYnav8WtD5Lfj",
+					"updatedAt": "<timestamp>"
+				},
+				"kid": "<hash:1>",
+				"kms": "postgres",
+				"meta": {
+					"algorithms": ["EdDSA", "Ed25519"]
+				},
+				"publicKeyAlias": null,
+				"publicKeyHex": "<string>",
+				"type": "Ed25519",
+				"updatedAt": null
+			}
+		}
+	}
+}

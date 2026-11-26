@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 import { check, param, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { ReceivedCredentials } from '../../services/api/received-credentials.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ReceivedCredentialController {
 	public static listOffersValidator = [
@@ -187,8 +189,26 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async listOffers(request: Request, response: Response) {
@@ -208,6 +228,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -249,13 +274,31 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
 	 *         description: Credential offer not found
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async getOfferDetails(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.query;
@@ -269,6 +312,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(offer);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -337,13 +385,37 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
 	 *         description: Credential offer not found
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async acceptOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid, createPresentation, presentationDomain } = request.body;
@@ -356,6 +428,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -419,13 +496,37 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
 	 *         description: Credential offer not found
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async rejectOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.body;
@@ -435,6 +536,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -454,7 +560,7 @@ export class ReceivedCredentialController {
 	 *   post:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Import an externally issued credential
-	 *     description: Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore
+	 *     description: Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore. Importing a credential that is still a pending offer to the holder accepts that offer; importing a credential the holder already stores succeeds and returns its existing hash.
 	 *     requestBody:
 	 *       required: true
 	 *       content:
@@ -494,8 +600,32 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async importCredential(request: Request, response: Response) {
@@ -507,6 +637,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (
 				errorMessage.includes('Invalid credential') ||
@@ -590,8 +725,26 @@ export class ReceivedCredentialController {
 	 *                   description: Number of results per page
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async listReceivedCredentials(request: Request, response: Response) {
@@ -609,6 +762,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -642,13 +800,31 @@ export class ReceivedCredentialController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
 	 *         description: Credential not found
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async getReceivedCredential(request: Request, response: Response) {
 		try {
-			let credentialHash = Array.isArray(request.params.credentialHash)
+			const credentialHash = Array.isArray(request.params.credentialHash)
 				? request.params.credentialHash[0]
 				: (request.params.credentialHash as string);
 			const customer = response.locals.customer;
@@ -657,6 +833,11 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found')) {
 				return response.status(StatusCodes.NOT_FOUND).json({

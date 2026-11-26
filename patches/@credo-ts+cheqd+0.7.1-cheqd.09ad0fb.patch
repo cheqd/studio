@@ -1,0 +1,37 @@
+diff --git a/node_modules/@credo-ts/cheqd/build/dids/CheqdDidRegistrar.mjs b/node_modules/@credo-ts/cheqd/build/dids/CheqdDidRegistrar.mjs
+index 7a0f150..eff8a10 100644
+--- a/node_modules/@credo-ts/cheqd/build/dids/CheqdDidRegistrar.mjs
++++ b/node_modules/@credo-ts/cheqd/build/dids/CheqdDidRegistrar.mjs
+@@ -373,7 +373,7 @@ var CheqdDidRegistrar = class {
+ 				}
+ 			};
+ 			const signInputs = await this.signPayload(agentContext, payloadToSign, authentication, didRecord.keys);
+-			const response = await cheqdLedgerService.deactivate(agentContext, didDocument, signInputs, versionId);
++			const response = await cheqdLedgerService.deactivate(agentContext, didDocument, signInputs, versionId, options.options?.fee, options.options?.feeOptions);
+ 			assertTxSucceeded(response);
+ 			await didRepository.update(agentContext, didRecord);
+ 			return {
+diff --git a/node_modules/@credo-ts/cheqd/build/ledger/CheqdLedgerService.mjs b/node_modules/@credo-ts/cheqd/build/ledger/CheqdLedgerService.mjs
+index 60ac547..43861ff 100644
+--- a/node_modules/@credo-ts/cheqd/build/ledger/CheqdLedgerService.mjs
++++ b/node_modules/@credo-ts/cheqd/build/ledger/CheqdLedgerService.mjs
+@@ -162,7 +162,18 @@ let CheqdLedgerService = class CheqdLedgerService {
+ 		return (await this.getPayerSdk(agentContext, didPayload.id)).updateDidDocTx(signInputs, didPayload, "", fee, void 0, versionId, feeOptions || { slippageBps: 1e3 });
+ 	}
+ 	async deactivate(agentContext, didPayload, signInputs, versionId, fee, feeOptions) {
+-		return (await this.getPayerSdk(agentContext, didPayload.id)).deactivateDidDocTx(signInputs, didPayload, "", fee, void 0, versionId, feeOptions || { slippageBps: 1e3 });
++		const sdk = await this.getPayerSdk(agentContext, didPayload.id);
++		const options = { slippageBps: 1e3, ...feeOptions };
++		// Studio patch (U-62): the SDK's fixed-fee path (mainnet) ignores feeOptions.gasLimit, so the fee is built
++		// here, with the amount the SDK charges and the caller's gas limit.
++		if (!fee && options.gasLimit) {
++			const [{ address }] = await sdk.options.wallet.getAccounts();
++			fee = {
++				...await sdk.generateDeactivateDidDocFees(address, void 0, options),
++				gas: String(options.gasLimit)
++			};
++		}
++		return sdk.deactivateDidDocTx(signInputs, didPayload, "", fee, void 0, versionId, options);
+ 	}
+ 	/** Retries idempotent chain reads on transient transport errors only. Never use for transactions. */
+ 	retryRead(operation) {

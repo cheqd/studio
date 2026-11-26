@@ -56,6 +56,7 @@ import type { UserEntity } from '../../database/entities/user.entity';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity';
 import type { SupportedKeyTypes } from '@veramo/utils';
 import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did';
+import type { ExportedPaymentAccountKey } from '../../types/account';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource';
 import { ListOperationOptions } from '../../types/track';
 
@@ -105,6 +106,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	}
 
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse> {
+		throw new Error(`Not supported`);
+	}
+
+	exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]> {
 		throw new Error(`Not supported`);
 	}
 

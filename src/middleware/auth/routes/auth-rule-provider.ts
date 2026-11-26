@@ -31,6 +31,11 @@ export class AuthRuleProvider implements IAuthRuleProvider {
 		this.push(new AuthRule(route, method, scope, options));
 	}
 
+	/** The registered rules, in matching order. */
+	public getRules(): readonly AuthRule[] {
+		return this.rules;
+	}
+
 	/**
 	 * Matches the request against the rules and returns the matching rule, if found.
 	 *

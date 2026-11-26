@@ -117,6 +117,7 @@ export type APIKeyResponseBody = {
 	createdAt: string;
 	expiresAt: string;
 	revoked: boolean;
+	expired: boolean;
 };
 // Create
 export type APIKeyCreateRequestBody = {

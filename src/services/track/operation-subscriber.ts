@@ -17,6 +17,8 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import type { Coin } from '@cosmjs/amino';
 import { CoinService } from '../api/coin.js';
 import { PaymentAccountService } from '../api/payment-account.js';
+import { operationRouting } from './operation-routing.js';
+import { activationMilestoneFor, recordActivation } from '../analytics/activation.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
@@ -128,12 +130,21 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				defaultFee,
 				false,
 				trackOperation.successful,
-				trackOperation.customer
+				trackOperation.customer,
+				operationRouting(trackOperation)
 			);
 
 			if (!operationEntity) {
 				throw new Error(`Operation ${trackOperation.name} was not written to DB`);
 			}
+
+			// Activation milestones (#869). Idempotent and never throws, so it cannot fail this operation.
+			const milestone = activationMilestoneFor(trackOperation.name);
+			if (milestone && trackOperation.successful !== false) {
+				await recordActivation(trackOperation.customer?.customerId, milestone);
+			}
+			// Any tracked call counts as the first API call (U-35); cached per process, so usually no statement
+			await recordActivation(trackOperation.customer?.customerId, 'first_api_call');
 
 			// Track payments
 			if (trackOperation.feePaymentOptions) {

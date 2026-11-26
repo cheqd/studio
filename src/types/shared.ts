@@ -58,6 +58,8 @@ export interface IErrorResponse {
 
 export type UnsuccessfulResponseBody = {
 	error: string;
+	/** Stable machine-readable code, where the route has one (for example a failed ledger write, U-30). */
+	code?: string;
 };
 
 export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody;
@@ -89,6 +91,8 @@ export class CommonReturn implements IReturn {
 export interface VerificationOptions {
 	fetchRemoteContexts?: boolean;
 	domain?: string;
+	/** The verifier's own challenge for a presentation */
+	challenge?: string;
 	verifyStatus?: boolean;
 	policies?: VerificationPolicies;
 	allowDeactivatedDid?: boolean;

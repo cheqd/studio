@@ -221,6 +221,8 @@ export interface IssuedCredentialCreateOptions {
 	statusIndex?: number;
 	retryCount?: number;
 	lastError?: string;
+	/** The engine that created the credential. Omitted means the column default (veramo). */
+	engine?: 'veramo' | 'credo';
 }
 
 export interface IssuedCredentialResponse {
@@ -253,8 +255,9 @@ export interface IssuedCredentialResponse {
 	retryCount?: number;
 	lastError?: string;
 
-	// Provider-specific metadata
-	providerMetadata?: Record<string, any>;
+	// Provider-specific metadata. A `jwt` credential is whole in `proof.jwt`; a `jsonld` credential issued by Studio is
+	// whole in `credential`. JSON-LD credentials issued before that field was added have no body: it was never kept.
+	providerMetadata?: Record<string, any> & { credential?: VerifiableCredential };
 
 	// Optional: Full credential
 	credential?: VerifiableCredential;

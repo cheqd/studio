@@ -13,7 +13,20 @@ export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
 export const API_KEY_PREFIX = 'caas';
 export const API_SECRET_KEY_LENGTH = 64;
+// Default lifetime, in days, of an API key created without an explicit expiry.
 export const API_KEY_EXPIRATION = 30;
+// Longest lifetime, in days, the create and update routes accept for a requested expiry.
+export const API_KEY_MAX_EXPIRATION_DAYS = (() => {
+	const parsed = Number.parseInt(process.env.API_KEY_MAX_EXPIRATION_DAYS ?? '', 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 730;
+})();
+// Most active (not revoked, not expired) API keys one customer may hold. Creating another is refused until one is
+// revoked or expires.
+export function parseMaxActiveAPIKeys(value: string | undefined): number {
+	const parsed = Number.parseInt(value ?? '', 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+}
+export const API_KEY_MAX_ACTIVE_PER_CUSTOMER = parseMaxActiveAPIKeys(process.env.API_KEY_MAX_ACTIVE_PER_CUSTOMER);
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
@@ -82,6 +95,18 @@ export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
+// Status list constants
+/**
+ * Most entries a status list may have (Bitstring Status List, StatusList2021 and Token Status List). The spec
+ * default and minimum is 131072 entries (16 KiB); the cap is eight times that. A list of this size at 8 bits per
+ * entry is 1 MiB before compression and encodes in about 10 ms, so allocation and compression stay small for every
+ * customer sharing the process. Override with STATUS_LIST_MAX_LENGTH.
+ */
+export const STATUS_LIST_MIN_LENGTH = 131072;
+export const STATUS_LIST_MAX_LENGTH = Math.floor(
+	parseNumberEnv(process.env.STATUS_LIST_MAX_LENGTH, 1048576, 'STATUS_LIST_MAX_LENGTH')
+);
+
 // Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
 export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(
 	process.env.FAUCET_MONTHLY_LIMIT_CHEQ,
@@ -188,6 +213,7 @@ export enum OperationDefaultFeeEnum {
 	DID_UPDATE = 25000000000,
 	DID_CREATE = 50000000000,
 	DID_DEACTIVATE = 10000000000,
+	// eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- deliberately the same default fee as DID_DEACTIVATE
 	RESOURCE_CREATE_IMAGE = 10000000000,
 	RESOURCE_CREATE_JSON = 2500000000,
 	RESOURCE_CREATE_OTHER = 5000000000,

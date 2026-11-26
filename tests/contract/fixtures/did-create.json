@@ -1,0 +1,59 @@
+{
+	"schema": 1,
+	"stepId": "did-create",
+	"routeId": "POST /did/create",
+	"tier": 2,
+	"effect": "ledger-fee",
+	"recorded": {
+		"at": "2026-11-13T13:39:08.579Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/did/create",
+			"body": {
+				"assertionMethod": true,
+				"identifierFormatType": "uuid",
+				"network": "testnet",
+				"verificationMethodType": "Ed25519VerificationKey2018"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"controllerKeyId": "<hash:1>",
+				"controllerKeyRefs": ["<hash:1>"],
+				"controllerKeys": [
+					{
+						"controller": "did:cheqd:testnet:<uuid:1>",
+						"kid": "<hash:1>",
+						"kms": "postgres",
+						"meta": {
+							"algorithms": ["EdDSA", "Ed25519"]
+						},
+						"publicKeyHex": "<hash:1>",
+						"type": "Ed25519"
+					}
+				],
+				"did": "did:cheqd:testnet:<uuid:1>",
+				"keys": [
+					{
+						"controller": "did:cheqd:testnet:<uuid:1>",
+						"kid": "<hash:1>",
+						"kms": "postgres",
+						"meta": {
+							"algorithms": ["EdDSA", "Ed25519"]
+						},
+						"publicKeyHex": "<hash:1>",
+						"type": "Ed25519"
+					}
+				],
+				"provider": "did:cheqd:testnet",
+				"services": []
+			}
+		}
+	}
+}

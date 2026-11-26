@@ -11,12 +11,16 @@ import { productHasCapability, StudioPlanCapability } from '../../services/admin
 
 dotenv.config();
 
+/** How long a user's role names are reused before Logto is asked again. */
+const ROLE_CACHE_TTL_MS = 30_000;
+
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	private m2mToken: string;
 	private allScopes: string[];
 	private allResourceWithNames: string[];
 	public defaultScopes: string[];
 	private m2mGetTokenAttempts = 5;
+	private userRoleCache = new Map<string, { names: string[]; expires: number }>();
 
 	constructor() {
 		super();
@@ -116,6 +120,28 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			}
 		}
 		return this.returnOk(scopes);
+	}
+
+	/**
+	 * The names of the Logto roles assigned to the user, from the Management API (the source of truth, so removing a
+	 * staff role takes effect at the next lookup). Cached per user for a short time to spare Logto, so a removal can
+	 * take up to `ROLE_CACHE_TTL_MS` to apply. Failures are not cached. Role names only: nothing secret is logged.
+	 */
+	public async getUserRoles(userId: string): Promise<ICommonErrorResponse> {
+		const cached = this.userRoleCache.get(userId);
+		if (cached && cached.expires > Date.now()) {
+			return this.returnOk([...cached.names]);
+		}
+		const roles = await this.getRolesForUser(userId);
+		if (roles.status !== StatusCodes.OK || !Array.isArray(roles.data)) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, 'getUserRoles: could not read the roles for the user');
+		}
+		const names = (roles.data as { name?: unknown }[])
+			.map((role) => role?.name)
+			.filter((name): name is string => typeof name === 'string');
+		if (this.userRoleCache.size >= 1000) this.userRoleCache.clear();
+		this.userRoleCache.set(userId, { names, expires: Date.now() + ROLE_CACHE_TTL_MS });
+		return this.returnOk([...names]);
 	}
 
 	public async getAppScopes(appId: string): Promise<ICommonErrorResponse> {
@@ -397,6 +423,19 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 	}
 
+	/**
+	 * Deletes a Logto user. Treats a 404 (user already gone) as success, not a failure, so a retry after a
+	 * first call that timed out but actually succeeded doesn't get stuck.
+	 */
+	public async deleteUser(userId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
+		try {
+			return await this.deleteFromLogto(uri);
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `deleteUser ${err}`);
+		}
+	}
+
 	private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -469,6 +508,24 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 		if (!response.ok) {
 			return this.returnError(StatusCodes.BAD_GATEWAY, await response.json());
+		}
+		return this.returnOk({});
+	}
+
+	private async deleteFromLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse> {
+		const response = await fetch(uri, {
+			headers: {
+				...headers,
+				Authorization: 'Bearer ' + (await this.getM2MToken()),
+			},
+			method: 'DELETE',
+		});
+
+		if (response.status === StatusCodes.NOT_FOUND) {
+			return this.returnOk({ alreadyDeleted: true });
+		}
+		if (!response.ok) {
+			return this.returnError(response.status, await response.text());
 		}
 		return this.returnOk({});
 	}

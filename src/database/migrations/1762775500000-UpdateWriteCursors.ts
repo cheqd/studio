@@ -25,6 +25,14 @@ export class UpdateWriteCursors1762775500000 implements MigrationInterface {
 
 		console.log('Starting writeCursor update migration...');
 
+		// Nothing to update (for example a fresh database): skip the entity queries below. They select every column
+		// the current entities declare, including columns added by later migrations, which do not exist yet here.
+		const existingRegistries = await queryRunner.query(`SELECT 1 FROM "statusRegistry" LIMIT 1`);
+		if (existingRegistries.length === 0) {
+			console.log('No status registries found, nothing to update');
+			return;
+		}
+
 		// Get all status registries
 		const statusRegistries = await queryRunner.manager.find(StatusRegistryEntity, {
 			relations: ['customer'],

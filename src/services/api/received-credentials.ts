@@ -1,4 +1,5 @@
 import type { VerifiableCredential, IVerifyResult, PresentationPayload } from '@veramo/core';
+import { OwnershipError } from '../identity/ownership-error.js';
 import { Repository, LessThan } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
@@ -7,6 +8,7 @@ import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { VerificationOptions } from '../../types/shared.js';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { Credential } from '@veramo/data-store';
+import { computeEntryHash } from '@veramo/utils';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,6 +19,34 @@ const ACCREDITATION_TYPES = [
 	'VerifiableAccreditationToAttest',
 	'VerifiableAuthorizationForTrustChain',
 ];
+
+/** Sorted-key JSON, so two copies of the same object compare equal whatever order their keys were written in. */
+function stableStringify(value: unknown): string {
+	if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+	if (value && typeof value === 'object') {
+		const entries = Object.keys(value as Record<string, unknown>)
+			.sort()
+			.map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`);
+		return `{${entries.join(',')}}`;
+	}
+	return JSON.stringify(value) ?? 'null';
+}
+
+/**
+ * What identifies one signed credential: the compact JWT of a JWT credential, or the proof of a JSON-LD one. Undefined
+ * when the credential carries neither.
+ */
+export function credentialFingerprint(
+	credential: VerifiableCredential | string | undefined | null
+): string | undefined {
+	if (!credential) return undefined;
+	if (typeof credential === 'string') return `jwt:${credential.trim()}`;
+	const proof = (credential as { proof?: unknown }).proof;
+	if (!proof || typeof proof !== 'object') return undefined;
+	const jwt = (proof as { jwt?: unknown }).jwt;
+	if (typeof jwt === 'string') return `jwt:${jwt}`;
+	return `proof:${stableStringify(proof)}`;
+}
 
 export interface ListOffersOptions {
 	holderDid?: string;
@@ -83,7 +113,7 @@ export class ReceivedCredentials {
 				// Verify the provided holderDid belongs to this customer
 				const customerDids = await this.getHolderDids(customer);
 				if (!customerDids.includes(holderDid)) {
-					throw new Error(`DID ${holderDid} not found in your wallet`);
+					throw new OwnershipError();
 				}
 				subjectDids = [holderDid];
 			}
@@ -116,6 +146,9 @@ export class ReceivedCredentials {
 				limit,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to list pending offers: ${error}`);
 		}
 	}
@@ -137,7 +170,7 @@ export class ReceivedCredentials {
 
 			// Check if holderDid is owned by this customer
 			if (!customerDids.includes(holderDid)) {
-				throw new Error(`DID ${holderDid} not found in your wallet`);
+				throw new OwnershipError();
 			}
 
 			// Query offer without customer filter (issuer could be different customer)
@@ -151,7 +184,7 @@ export class ReceivedCredentials {
 			});
 
 			if (!offer) {
-				throw new Error('Credential offer not found or expired');
+				throw new OwnershipError();
 			}
 
 			// Check if offer has expired
@@ -161,6 +194,9 @@ export class ReceivedCredentials {
 
 			return offer;
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to get offer details: ${error}`);
 		}
 	}
@@ -186,7 +222,7 @@ export class ReceivedCredentials {
 
 			// Check if holderDid is owned by this customer
 			if (!holderDids.includes(holderDid)) {
-				throw new Error(`DID ${holderDid} not found in your wallet`);
+				throw new OwnershipError();
 			}
 
 			// Query offer without customer filter (issuer could be different customer)
@@ -200,7 +236,7 @@ export class ReceivedCredentials {
 			});
 
 			if (!offer) {
-				throw new Error('Credential offer not found or expired');
+				throw new OwnershipError();
 			}
 
 			// Check if offer has expired
@@ -222,11 +258,9 @@ export class ReceivedCredentials {
 			const verificationOptions: VerificationOptions = {
 				verifyStatus: true,
 			};
-			const verification: IVerifyResult = await identityService.agent.verifyCredential(
-				credential,
-				verificationOptions,
-				customer
-			);
+			const verification: IVerifyResult = await (
+				await identityService.routed('credential')
+			).verifyCredential(credential, verificationOptions, customer);
 
 			if (!verification.verified) {
 				throw new Error(`Invalid credential: ${verification.error}`);
@@ -266,6 +300,9 @@ export class ReceivedCredentials {
 				presentation,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to accept offer: ${error}`);
 		}
 	}
@@ -302,6 +339,9 @@ export class ReceivedCredentials {
 				message: 'Credential offer rejected successfully',
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to reject offer: ${error}`);
 		}
 	}
@@ -366,7 +406,7 @@ export class ReceivedCredentials {
 	private async getHolderDids(customer: CustomerEntity): Promise<string[]> {
 		try {
 			const identityService = new IdentityServiceStrategySetup(customer.customerId);
-			const agent = identityService.agent;
+			const agent = await identityService.routed('did');
 
 			if (!agent) {
 				throw new Error('Agent not initialized');
@@ -395,7 +435,7 @@ export class ReceivedCredentials {
 		domain?: string
 	): Promise<string> {
 		try {
-			const identityService = new IdentityServiceStrategySetup(customer.customerId).agent;
+			const identityService = await new IdentityServiceStrategySetup(customer.customerId).routed('presentation');
 
 			const presentationPayload: PresentationPayload = {
 				holder: holderDid,
@@ -431,13 +471,17 @@ export class ReceivedCredentials {
 		holderDid: string
 	): Promise<{ success: boolean; credentialHash: string; credential: VerifiableCredential }> {
 		try {
-			const identityService = new IdentityServiceStrategySetup(customer.customerId).agent;
+			const identityService = new IdentityServiceStrategySetup(customer.customerId);
+			// The hash-keyed data store calls below stay on the Veramo service (no engine is recorded per hash)
+			const dataStore = identityService.agent;
 
 			// Verify the credential first
 			const verificationOptions: VerificationOptions = {
 				verifyStatus: false, // Don't verify status for external credentials
 			};
-			const verification = await identityService.verifyCredential(credential, verificationOptions, customer);
+			const verification = await (
+				await identityService.routed('credential')
+			).verifyCredential(credential, verificationOptions, customer);
 
 			if (!verification.verified) {
 				throw new Error(`Invalid credential: ${verification.error}`);
@@ -458,7 +502,7 @@ export class ReceivedCredentials {
 			// Check if holder DID exists in customer's wallet
 			const holderDids = await this.getHolderDids(customer);
 			if (!holderDids.includes(holderDid)) {
-				throw new Error('Holder DID does not exist in your wallet');
+				throw new OwnershipError();
 			}
 
 			// Verify subject matches holder DID
@@ -466,8 +510,32 @@ export class ReceivedCredentials {
 				throw new Error('Credential subject does not match holder DID');
 			}
 
-			// Save to Veramo dataStore only
-			const credentialHash = await identityService.saveCredential(parsedCredential, customer);
+			// The same credential may already be waiting for this holder as an offer (a credential issued by Studio to a
+			// DID Studio holds is stored as an offer). Importing it accepts that offer: the stored copy is the one kept,
+			// and saving it a second time under the same hash would fail.
+			const offer = await this.findPendingOfferFor(credential, holderDid);
+			if (offer?.veramoHash) {
+				offer.status = 'issued';
+				offer.subjectAcceptedAt = new Date();
+				await this.repository.save(offer);
+				return {
+					success: true,
+					credentialHash: offer.veramoHash,
+					credential: parsedCredential,
+				};
+			}
+
+			// Save to Veramo dataStore only. Importing a credential the store already holds is not an error: the stored
+			// copy is the same credential, so its hash is returned.
+			let credentialHash: string;
+			try {
+				credentialHash = await dataStore.saveCredential(parsedCredential, customer);
+			} catch (saveError) {
+				const hash = computeEntryHash(parsedCredential);
+				const stored = await dataStore.retrieveCredential(hash, customer).catch(() => null);
+				if (!stored) throw saveError;
+				credentialHash = hash;
+			}
 
 			return {
 				success: true,
@@ -475,8 +543,36 @@ export class ReceivedCredentials {
 				credential: parsedCredential,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to import credential: ${error}`);
 		}
+	}
+
+	/**
+	 * The pending (`offered`) offer to `holderDid` that holds the same credential, or null. A JWT credential matches
+	 * on its compact JWT; a JSON-LD credential on its proof, whose signature is unique to the credential.
+	 */
+	private async findPendingOfferFor(
+		credential: VerifiableCredential | string,
+		holderDid: string
+	): Promise<IssuedCredentialEntity | null> {
+		const fingerprint = credentialFingerprint(credential);
+		if (!fingerprint) return null;
+		// Not filtered by customer: the issuer may be another account (as in acceptOffer)
+		const offers = await this.repository.find({
+			where: { subjectId: holderDid, status: 'offered' },
+			relations: ['veramoCredential'],
+		});
+		return (
+			offers.find(
+				(offer) =>
+					!!offer.veramoHash &&
+					credentialFingerprint(offer.veramoCredential?.raw as VerifiableCredential | undefined) ===
+						fingerprint
+			) ?? null
+		);
 	}
 
 	/**
@@ -518,7 +614,7 @@ export class ReceivedCredentials {
 				// Verify the provided holderDid belongs to this customer
 				const customerDids = await this.getHolderDids(customer);
 				if (!customerDids.includes(holderDid)) {
-					throw new Error(`DID ${holderDid} not found in your wallet`);
+					throw new OwnershipError();
 				}
 				subjectDids = [holderDid];
 			}
@@ -608,6 +704,9 @@ export class ReceivedCredentials {
 				limit,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to list received credentials: ${error}`);
 		}
 	}
@@ -626,7 +725,7 @@ export class ReceivedCredentials {
 			const credential = await identityService.retrieveCredential(credentialHash, customer);
 
 			if (!credential) {
-				throw new Error(`Credential with hash ${credentialHash} not found`);
+				throw new OwnershipError();
 			}
 
 			// Verify the credential subject belongs to customer's wallet
@@ -642,11 +741,14 @@ export class ReceivedCredentials {
 			// Check if subject DID belongs to this customer
 			const holderDids = await this.getHolderDids(customer);
 			if (!holderDids.includes(subjectId)) {
-				throw new Error('Credential subject does not belong to your wallet');
+				throw new OwnershipError();
 			}
 
 			return credential;
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to get received credential: ${error}`);
 		}
 	}

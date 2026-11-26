@@ -55,6 +55,7 @@ import { KeyService } from '../../../api/key.js';
 import { PaymentAccountService } from '../../../api/payment-account.js';
 import { CheqdNetwork, toMultibaseRaw, VerificationMethod } from '@cheqd/sdk';
 import { IdentifierService } from '../../../api/identifier.js';
+import { OwnershipError } from '../../ownership-error.js';
 import type { KeyEntity } from '../../../../database/entities/key.entity.js';
 import type { UserEntity } from '../../../../database/entities/user.entity.js';
 import { APIKeyService } from '../../../admin/api-key.js';
@@ -84,6 +85,7 @@ import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 import { JWT_PROOF_TYPE } from '../../../../types/constants.js';
 import { fromString } from 'uint8arrays';
+import type { ExportedPaymentAccountKey } from '../../../../types/account.js';
 
 dotenv.config();
 
@@ -209,6 +211,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const key = await Veramo.instance.importKey(this.agent!, type, privateKeyHex);
+		// A key row that another customer already owns must never be reassigned to the importer.
+		const existing = await KeyService.instance.get(key.kid, { customer: true });
+		if (existing?.customer && existing.customer.customerId !== customer?.customerId) {
+			throw new OwnershipError();
+		}
 		// Update our specific key columns
 		return await KeyService.instance.update(key.kid, customer, keyAlias, new Date());
 	}
@@ -274,9 +281,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		if (!(await IdentifierService.instance.find({ did: didDocument.id, customer: customer }))) {
-			throw new Error(`${didDocument.id} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(didDocument.id, customer);
 		try {
 			const agent = await this.createAgent(customer);
 			const publicKeys: TPublicKeyEd25519[] =
@@ -299,9 +304,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		try {
 			const agent = await this.createAgent(customer);
 			const publicKeys: TPublicKeyEd25519[] =
@@ -343,6 +346,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				(e) =>
 					(e.services = e.services.map((s) => {
 						s.serviceEndpoint =
+							// eslint-disable-next-line no-useless-escape -- harmless escape in a regex character class; left untouched in A-067
 							typeof s.serviceEndpoint === 'string' && /^[{\[]/.test(s.serviceEndpoint.trim())
 								? JSON.parse(s.serviceEndpoint)
 								: s.serviceEndpoint;
@@ -369,6 +373,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!did.match(DefaultDidUrlPattern)) {
 			throw new Error('Invalid DID');
 		}
+		// An identifier row that another customer already owns must never be reassigned to the importer.
+		const existing = await IdentifierService.instance.get(did, undefined, { customer: true });
+		if (existing?.customer && existing.customer.customerId !== customer?.customerId) {
+			throw new OwnershipError();
+		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const identifier: IIdentifier = await Veramo.instance.importDid(
 			this.agent!,
@@ -387,7 +396,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const identifier = await IdentifierService.instance.get(did, customer, { keys: true });
 		if (!identifier) {
-			throw new Error(`${did} not found in wallet`);
+			throw new OwnershipError();
 		}
 		const keys = identifier.keys;
 		const { didDocument, didDocumentMetadata, didResolutionMetadata } = await this.resolveDid(did);
@@ -452,6 +461,34 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		};
 	}
 
+	/**
+	 * Decrypts and returns the customer's mainnet/testnet payment-account private keys (the cosmos
+	 * fee-payer wallets), for the account-deletion key-export flow. These are not DID keys and aren't
+	 * reachable through exportDid.
+	 */
+	async exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
+
+		const keys = await Promise.all(
+			paymentAccounts.map(async (account) => {
+				const keyDoc = await this.getPrivateKey(account.key.kid);
+				if (!keyDoc) {
+					throw new Error(`Private key not found for payment account ${account.address}`);
+				}
+				return {
+					network: account.namespace,
+					address: account.address,
+					type: account.key.type,
+					privateKeyHex: keyDoc.privateKeyHex,
+				};
+			})
+		);
+		return keys;
+	}
+
 	async createResource(
 		network: string,
 		payload: ResourcePayload,
@@ -461,15 +498,16 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
-			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-				throw new Error(`${did} not found in wallet`);
-			}
+			await this.assertCustomerOwnsDid(did, customer);
 			const publicKeys: TPublicKeyEd25519[] =
 				publicKeyHexs?.map((key) => {
 					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`${error}`);
 		}
 	}
@@ -487,7 +525,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				encrypted: options.encrypted,
 			};
 
-			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
+			const relations: FindOptionsRelations<ResourceEntity | undefined> = {
 				identifier: true,
 			};
 			if (options.did || options.network) {
@@ -569,12 +607,13 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<VerifiableCredential> {
 		try {
 			const did = typeof credential.issuer == 'string' ? credential.issuer : credential.issuer.id;
-			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-				throw new Error(`${did} not found in wallet`);
-			}
+			await this.assertCustomerOwnsDid(did, customer);
 			const agent = await this.createAgent(customer);
 			return await Veramo.instance.issueCredential(agent, credential, format, statusOptions);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`${error}`);
 		}
 	}
@@ -685,6 +724,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
 	): Promise<VerifiablePresentation> {
+		const holder = typeof presentation.holder === 'string' ? presentation.holder : '';
+		await this.assertCustomerOwnsDid(holder, customer);
 		const agent = await this.createAgent(customer);
 		return await Veramo.instance.createPresentation(agent, presentation, verificationOptions);
 	}
@@ -743,9 +784,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		return await Veramo.instance.updateUnencryptedStatusList(agent, did, listType, statusOptions);
 	}
 
@@ -756,9 +795,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		return await Veramo.instance.updateEncryptedStatusList(agent, did, listType, statusOptions);
 	}
 
@@ -769,9 +806,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<StatusCheckResult> {
 		const agent = await this.createAgent(customer);
 		// ToDo: Should we try to get did from our storage? What if DID is placed on ledger but we don't have it in our own db?
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions);
 	}
 
@@ -791,9 +826,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<boolean> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 
@@ -803,9 +836,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<boolean> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
+		await this.assertCustomerOwnsDid(did, customer);
 		return await Veramo.instance.broadcastBitstringStatusList(agent, did, resourceOptions);
 	}
 
@@ -853,6 +884,21 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.unsuspendCredentials(agent, credentials, listType, publish, symmetricKey);
 	}
 
+	/**
+	 * Throws unless `customer` owns the identifier `did`.
+	 * IdentifierService.find() returns a findAndCount [rows, count] tuple, or [] on error. Both are truthy, so the
+	 * result must never be used as a boolean: read the count, and treat [] and a missing customer as not owned.
+	 */
+	private async assertCustomerOwnsDid(did: string, customer: CustomerEntity): Promise<void> {
+		if (!did || !customer?.customerId) {
+			throw new OwnershipError();
+		}
+		const [, ownedCount = 0] = await IdentifierService.instance.find({ did: did, customer: customer });
+		if (ownedCount < 1) {
+			throw new OwnershipError();
+		}
+	}
+
 	private async validateCredentialAccess(
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		customer: CustomerEntity
@@ -869,11 +915,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const issuerId =
 				typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
 
-			const existsInWallet = await IdentifierService.instance.find({ did: issuerId, customer: customer });
-
-			if (!existsInWallet) {
-				throw new Error(`${issuerId} not found in wallet`);
-			}
+			await this.assertCustomerOwnsDid(issuerId, customer);
 		}
 	}
 

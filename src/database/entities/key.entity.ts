@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { Key } from '@veramo/data-store';
@@ -7,6 +7,7 @@ import type { TKeyType } from '@veramo/core';
 dotenv.config();
 
 @Entity('key')
+@Index('IDX_key_customerId', ['customer'])
 export class KeyEntity extends Key {
 	@Column({
 		type: 'text',

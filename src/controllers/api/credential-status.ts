@@ -30,6 +30,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { validate } from '../validator/decorator.js';
+import { STATUS_LIST_MAX_LENGTH, STATUS_LIST_MIN_LENGTH } from '../../types/constants.js';
 import { CredentialStatusService } from '../../services/api/credential-status.js';
 import { param } from 'express-validator';
 
@@ -151,6 +152,14 @@ export class CredentialStatusController {
 			.bail()
 			.custom((value) => value > 0)
 			.withMessage('length: should be a positive integer')
+			.bail()
+			.custom((value) => value >= STATUS_LIST_MIN_LENGTH)
+			.withMessage(
+				`length: should be at least ${STATUS_LIST_MIN_LENGTH} (the minimum entries for herd privacy) and at most ${STATUS_LIST_MAX_LENGTH}`
+			)
+			.bail()
+			.custom((value) => value <= STATUS_LIST_MAX_LENGTH)
+			.withMessage(`length: should be at most ${STATUS_LIST_MAX_LENGTH}`)
 			.bail(),
 		check('encoding')
 			.optional()
@@ -779,8 +788,32 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async createUnencryptedStatusList(request: Request, response: Response) {
@@ -799,6 +832,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				created: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -809,8 +843,12 @@ export class CredentialStatusController {
 	 * /credential-status/create/encrypted:
 	 *   post:
 	 *     tags: [ Status Lists ]
+	 *     deprecated: true
 	 *     summary: Create an encrypted StatusList2021 or BitstringStatusList credential status list.
-	 *     description: This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
+	 *     description: |
+	 *       **Deprecated.** Creating encrypted (paid-access) status lists is deprecated and will be removed. Responses carry `Deprecation` (RFC 9745) and, once a sunset date is configured, `Sunset` (RFC 8594) headers. After the sunset date this endpoint returns `410 Gone`; use `POST /credential-status/create/unencrypted` instead. Existing encrypted status lists can still be read, checked and updated.
+	 *
+	 *       This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
 	 *     parameters:
 	 *       - in: query
 	 *         name: listType
@@ -869,8 +907,38 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       410:
+	 *         description: Gone. Encrypted status list creation has passed its sunset date. Create an unencrypted status list instead.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/Gone'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async createEncryptedStatusList(request: Request, response: Response) {
@@ -889,6 +957,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				created: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -935,8 +1004,38 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async updateUnencryptedStatusList(request: Request, response: Response) {
@@ -955,6 +1054,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				updated: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1001,8 +1101,38 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async updateEncryptedStatusList(request: Request, response: Response) {
@@ -1021,6 +1151,7 @@ export class CredentialStatusController {
 			return response.status(result.statusCode).json({
 				updated: false,
 				error: result.error,
+				...(result.code ? { code: result.code } : {}),
 			} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1073,8 +1204,38 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async checkStatusList(request: Request, response: Response) {
@@ -1103,7 +1264,9 @@ export class CredentialStatusController {
 	 * /credential-status/search:
 	 *   get:
 	 *     tags: [ Status Lists ]
+	 *     security: []
 	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
+	 *     description: Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.
 	 *     parameters:
 	 *       - in: query
 	 *         name: did
@@ -1146,8 +1309,26 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	async searchStatusList(request: Request, response: Response) {
@@ -1224,6 +1405,12 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -1271,13 +1458,19 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	@validate
 	async fetchStatusList(request: Request, response: Response) {
 		const credentialStatusService = new CredentialStatusService();
-		let statusListId = Array.isArray(request.params.statusListId)
+		const statusListId = Array.isArray(request.params.statusListId)
 			? request.params.statusListId[0]
 			: (request.params.statusListId as string);
 		const result = await credentialStatusService.getStatusList(

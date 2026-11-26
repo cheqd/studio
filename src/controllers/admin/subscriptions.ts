@@ -24,12 +24,49 @@ import type {
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
+import { DeletedAccountRecordService } from '../../services/api/deleted-account-record.js';
 import { stripeService } from '../../services/admin/stripe.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { validate } from '../validator/decorator.js';
 import { MaxAllowedTrialPeriodDays } from '../../types/constants.js';
 
 dotenv.config();
+
+/** True when Stripe reports that the requested object does not exist. */
+function isStripeMissing(error: unknown): boolean {
+	const { code, statusCode } = (error ?? {}) as { code?: string; statusCode?: number };
+	return code === 'resource_missing' || statusCode === StatusCodes.NOT_FOUND;
+}
+
+/** True when a Stripe `customer` reference (an id, or an expanded object) is the caller's own Stripe customer. */
+function stripeObjectBelongsTo(
+	reference: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined,
+	customer: { paymentProviderId?: string } | undefined
+): boolean {
+	const owner = typeof reference === 'string' ? reference : reference?.id;
+	return Boolean(owner) && Boolean(customer?.paymentProviderId) && owner === customer?.paymentProviderId;
+}
+
+/** True when the Stripe subscription belongs to the caller's Stripe customer. */
+async function ownsSubscription(
+	stripe: Stripe,
+	customer: { paymentProviderId?: string } | undefined,
+	subscriptionId: string
+): Promise<boolean> {
+	if (!customer?.paymentProviderId || !subscriptionId) {
+		return false;
+	}
+	try {
+		const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+		return stripeObjectBelongsTo(subscription.customer, customer);
+	} catch (error) {
+		// Stripe answers an unknown id with an error: treat it exactly like a subscription that is not the caller's.
+		if (isStripeMissing(error)) {
+			return false;
+		}
+		throw error;
+	}
+}
 
 export function syncCustomer(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
 	// save a reference to the original method this way we keep the values currently in the
@@ -238,6 +275,12 @@ export class SubscriptionController {
 	async startTrialForPlan(response: Response, body: SubscriptionCreateRequestBody): Promise<Response> {
 		const stripe = response.locals.stripe as Stripe;
 
+		if (await DeletedAccountRecordService.instance.hasPriorDeletedAccount(response.locals.customer.email)) {
+			return response.status(StatusCodes.FORBIDDEN).json({
+				error: 'This email previously had a cheqd Studio account. New free trials are not available for this email -- please choose a paid plan to continue.',
+			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+		}
+
 		const { price, quantity = 1, trialPeriodDays } = body;
 		const subscriptionResponse = await stripe.subscriptions.create({
 			customer: response.locals.customer.paymentProviderId,
@@ -387,14 +430,18 @@ export class SubscriptionController {
 	@syncCustomer
 	public async list(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const paymentProviderId = response.locals.customer.paymentProviderId;
+		const paymentProviderId = response.locals.customer?.paymentProviderId;
+		// Always scoped to the caller's own Stripe customer: without one there is nothing to list
+		if (!paymentProviderId) {
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: `Subscriptions were not found`,
+			} satisfies SubscriptionListUnsuccessfulResponseBody);
+		}
 		try {
 			// Get the subscriptions
-			const subscriptions = paymentProviderId
-				? await stripe.subscriptions.list({
-						customer: paymentProviderId as string,
-					})
-				: await stripe.subscriptions.list();
+			const subscriptions = await stripe.subscriptions.list({
+				customer: paymentProviderId as string,
+			});
 
 			if (subscriptions.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -467,7 +514,7 @@ export class SubscriptionController {
 	 * @openapi
 	 *
 	 * /admin/subscription/cancel:
-	 *  post:
+	 *  delete:
 	 *    summary: Cancel a subscription
 	 *    description: Cancels an existing subscription
 	 *    tags: [Subscription]
@@ -499,10 +546,17 @@ export class SubscriptionController {
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
 
 		try {
+			if (!(await ownsSubscription(stripe, response.locals.customer, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionCancelUnsuccessfulResponseBody);
+			}
 			// Cancel the subscription
-			const subscription = await stripe.subscriptions.cancel(subscriptionId as string, {
-				idempotencyKey: idempotencyKey,
-			});
+			const subscription = await SubscriptionService.instance.cancel(
+				stripe,
+				subscriptionId as string,
+				idempotencyKey
+			);
 
 			// Check if the subscription was cancelled
 			if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
@@ -555,6 +609,11 @@ export class SubscriptionController {
 		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionResumeRequestBody;
 		try {
+			if (!(await ownsSubscription(stripe, response.locals.customer, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionResumeUnsuccessfulResponseBody);
+			}
 			// Resume the subscription
 			const subscription = await stripe.subscriptions.resume(subscriptionId as string, {
 				idempotencyKey: idempotencyKey,
@@ -614,8 +673,22 @@ export class SubscriptionController {
 			? request.params.id[0]
 			: (request.params.id as string);
 		try {
-			// retrieve the checkout session
-			const checkoutSession = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+			// retrieve the checkout session. An unknown id answers exactly like another customer's session.
+			const checkoutSession = await stripe.checkout.sessions
+				.retrieve(checkoutSessionId)
+				.catch((error: unknown) => {
+					if (isStripeMissing(error)) {
+						return null;
+					}
+					throw error;
+				});
+
+			// Only the Stripe customer that opened the session may read it.
+			if (!checkoutSession || !stripeObjectBelongsTo(checkoutSession.customer, response.locals.customer)) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Checkout session not found`,
+				} satisfies CheckoutSessionGetUnsuccessfulResponseBody);
+			}
 
 			// Check if the subscription was resumed
 			if (checkoutSession.lastResponse?.statusCode !== StatusCodes.OK) {

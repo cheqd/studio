@@ -6,6 +6,7 @@ import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { APIKeyService } from '../admin/api-key.js';
 import { ProviderFactory } from './provider.factory.js';
 import { ConnectionTestResult } from '../../types/provider.types.js';
+import { checkProviderEndpoint } from '../../helpers/provider-endpoint.js';
 
 export class ProviderService {
 	public providerRepository: Repository<CredentialProviderEntity>;
@@ -181,6 +182,10 @@ export class ProviderService {
 			return { success: false, message: 'Provider not activated for this customer' };
 		}
 		if (newAPIUrl) {
+			const endpointCheck = checkProviderEndpoint(newAPIUrl);
+			if (!endpointCheck.ok) {
+				return { success: false, message: endpointCheck.error };
+			}
 			config.apiEndpoint = newAPIUrl;
 		}
 		try {

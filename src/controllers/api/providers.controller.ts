@@ -11,6 +11,7 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { IDIDTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { check, param } from '../validator/index.js';
+import { checkProviderEndpoint, checkProviderWebhookUrl } from '../../helpers/provider-endpoint.js';
 
 export class ProvidersController {
 	public static importDIDValidator = [
@@ -108,7 +109,7 @@ export class ProvidersController {
 	async getProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 
@@ -173,7 +174,7 @@ export class ProvidersController {
 	async activateProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 
@@ -245,7 +246,7 @@ export class ProvidersController {
 	async updateProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 			const { apiEndpoint, webhookUrl, defaultSettings } = req.body;
@@ -263,19 +264,18 @@ export class ProvidersController {
 				});
 			}
 
-			if (process.env.APPLICATION_BASE_URL?.includes('localhost')) {
-				console.warn('Skipping URL validation in local development environment');
-			} else {
-				if (apiEndpoint && !apiEndpoint.startsWith('https://')) {
-					return res.status(StatusCodes.BAD_REQUEST).json({
-						error: 'API endpoint must be a valid HTTPS URL',
-					});
+			// Studio sends the provider key to apiEndpoint, so it must be an allowed provider host (S6)
+			if (apiEndpoint && apiEndpoint.trim()) {
+				const endpointCheck = checkProviderEndpoint(apiEndpoint.trim());
+				if (!endpointCheck.ok) {
+					return res.status(StatusCodes.BAD_REQUEST).json({ error: endpointCheck.error });
 				}
+			}
 
-				if (webhookUrl && webhookUrl.trim() && !webhookUrl.startsWith('https://')) {
-					return res.status(StatusCodes.BAD_REQUEST).json({
-						error: 'Webhook URL must be a valid HTTPS URL',
-					});
+			if (webhookUrl && webhookUrl.trim()) {
+				const webhookCheck = checkProviderWebhookUrl(webhookUrl.trim());
+				if (!webhookCheck.ok) {
+					return res.status(StatusCodes.BAD_REQUEST).json({ error: webhookCheck.error });
 				}
 			}
 
@@ -346,10 +346,19 @@ export class ProvidersController {
 	async testConnection(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 			const newAPIUrl = req.query?.newAPIUrl as string | undefined;
+			if (newAPIUrl !== undefined) {
+				const endpointCheck =
+					typeof newAPIUrl === 'string'
+						? checkProviderEndpoint(newAPIUrl)
+						: { ok: false as const, error: 'API endpoint must be a valid HTTPS URL' };
+				if (!endpointCheck.ok) {
+					return res.status(StatusCodes.BAD_REQUEST).json({ error: endpointCheck.error });
+				}
+			}
 			const result = await ProviderService.instance.testConnection(customer.customerId, providerId, newAPIUrl);
 
 			const statusCode = result.success ? StatusCodes.OK : StatusCodes.BAD_REQUEST;
@@ -386,7 +395,7 @@ export class ProvidersController {
 	async removeProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 
@@ -470,7 +479,9 @@ export class ProvidersController {
 			let importedResult: IIdentifier;
 			switch (providerId) {
 				case 'dock':
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer);
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const exportedResult = await identityServiceStrategySetup.agent.exportDid(
 						did,
 						process.env.PROVIDER_EXPORT_PASSWORD || '',

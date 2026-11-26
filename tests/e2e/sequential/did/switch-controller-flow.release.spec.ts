@@ -44,7 +44,12 @@ let DIDDocument_A: DIDDocument;
 let DIDDocument_B: DIDDocument;
 let DIDDocument_C: DIDDocument;
 
+// FIXME(credo-ci): the first tests create DIDs through the Credo engine, and CI has no Credo store, so they answer
+// 503 engine_unavailable and every later test in this serial group depends on them. Re-enable once CI has a Credo
+// database (action A-086 in the knowledge base).
 test.describe.serial('Running test sequentially', () => {
+	test.fixme(true, 'Needs a Credo store in CI (A-086)');
+
 	test('1. It checks DID-A', async ({ request }) => {
 		const response = await request.post(`/did/create`, {
 			data:

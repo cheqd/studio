@@ -1,0 +1,60 @@
+{
+	"schema": 1,
+	"stepId": "status-list-update-unencrypted",
+	"routeId": "POST /credential-status/update/unencrypted",
+	"tier": 2,
+	"effect": "ledger-fee",
+	"recorded": {
+		"at": "2026-11-13T13:39:08.581Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/credential-status/update/unencrypted",
+			"query": {
+				"listType": "StatusList2021",
+				"statusAction": "revoke"
+			},
+			"body": {
+				"did": "did:cheqd:testnet:<uuid:1>",
+				"indices": [1],
+				"statusListName": "contract-list-<var:run>"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"resource": {
+					"StatusList2021": {
+						"encodedList": "<encodedList:H>",
+						"statusPurpose": "revocation",
+						"validFrom": "<timestamp>"
+					},
+					"metadata": {
+						"encoding": "base64url",
+						"encrypted": false,
+						"type": "StatusList2021Revocation"
+					}
+				},
+				"resourceMetadata": {
+					"checksum": "<hash:1>",
+					"created": "<timestamp>",
+					"mediaType": "application/json",
+					"nextVersionId": null,
+					"previousVersionId": "<uuid:2>",
+					"resourceCollectionId": "<uuid:1>",
+					"resourceId": "<uuid:3>",
+					"resourceName": "contract-list-<var:run>",
+					"resourceType": "StatusList2021Revocation",
+					"resourceURI": "did:cheqd:testnet:<uuid:1>/resources/<uuid:3>",
+					"resourceVersion": "<timestamp>"
+				},
+				"revoked": [true],
+				"updated": true
+			}
+		}
+	}
+}

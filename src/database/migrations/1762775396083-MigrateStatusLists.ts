@@ -25,6 +25,16 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log('Starting Studio status list migration...');
 
+		// Nothing to migrate (for example a fresh database): skip the entity queries below. They select every column
+		// the current entities declare, including columns added by later migrations, which do not exist yet here.
+		const sourceRows = await queryRunner.query(
+			`SELECT 1 FROM "resource" WHERE "resourceType" IN ('BitstringStatusListCredential', 'StatusList2021Revocation', 'StatusList2021Suspension', 'StatusList2021') LIMIT 1`
+		);
+		if (sourceRows.length === 0) {
+			console.log('No status list resources found, nothing to migrate');
+			return;
+		}
+
 		// Find all status list resources
 		const statusListResources = await queryRunner.manager.find(ResourceEntity, {
 			where: [
@@ -218,6 +228,7 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 			// gunzipSync expects a Uint8Array/DataView in some typings; convert Buffer to Uint8Array to satisfy TS type
 			const decompressed = gunzipSync(Uint8Array.from(compressed));
 			// Determine byte length from decompressed data
+			// eslint-disable-next-line prefer-const -- declared separately from its single assignment; not auto-fixable
 			byteLength = (decompressed as Buffer).length ?? (decompressed as Uint8Array).length;
 
 			const bitLength = byteLength * 8;

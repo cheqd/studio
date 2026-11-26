@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -18,6 +19,8 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { eventTracker } from '../../services/track/tracker.js';
 import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
+import { PresentationBindingRequiredError } from '../../services/identity/engine/credo/errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -29,6 +32,14 @@ export class PresentationController {
 			.bail(),
 		check('holderDid').optional().isDID().bail(),
 		check('verifierDid').optional().isDID().bail(),
+		check('challenge')
+			.optional()
+			.isString()
+			.withMessage('challenge: should be a string')
+			.bail()
+			.isLength({ min: 1, max: 1024 })
+			.withMessage('challenge: should be between 1 and 1024 characters')
+			.bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 
@@ -40,6 +51,14 @@ export class PresentationController {
 			.withMessage('Provide a valid w3c verifiable presentation')
 			.bail(),
 		check('verifierDid').optional().isDID().bail(),
+		check('challenge')
+			.optional()
+			.isString()
+			.withMessage('challenge: should be a string')
+			.bail()
+			.isLength({ min: 1, max: 1024 })
+			.withMessage('challenge: should be between 1 and 1024 characters')
+			.bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 		check('makeFeePayment')
 			.optional()
@@ -94,23 +113,48 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async createPresentation(request: Request, response: Response) {
-		const { credentials, holderDid, verifierDid } = request.body as CreatePresentationRequestBody;
+		const { credentials, holderDid, verifierDid, challenge } = request.body as CreatePresentationRequestBody;
 
 		try {
-			const result = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.createPresentation(
+			const result = await (
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).routed('presentation')
+			).createPresentation(
 				{
 					verifiableCredential: credentials,
 					holder: holderDid,
 				},
 				{
 					domain: verifierDid,
+					challenge,
 				},
 				response.locals.customer
 			);
@@ -121,6 +165,11 @@ export class PresentationController {
 			}
 			return response.status(StatusCodes.OK).json(result satisfies CreatePresentationResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreatePresentationResponseBody);
@@ -134,7 +183,7 @@ export class PresentationController {
 	 *   post:
 	 *     tags: [ Verifiable Presentations ]
 	 *     summary: Verify a Verifiable Presentation generated from credential(s).
-	 *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.
+	 *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself. For customers served by the Credo engine, `challenge` (the value the verifier issued to the holder) and `verifierDid` (the domain the presentation was made for) are required, and a request without them is rejected with 400 `invalid_request`; `verifierDid` may be omitted only when `policies.audience` is `false`. The presentation's own nonce is never accepted in place of the challenge.
 	 *     parameters:
 	 *       - in: query
 	 *         name: verifyStatus
@@ -173,8 +222,32 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async verifyPresentation(request: Request, response: Response) {
@@ -182,7 +255,8 @@ export class PresentationController {
 		let feePaymentOptions: IFeePaymentOptions[] = [];
 
 		// Extract request parameters from body
-		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
+		const { presentation, verifierDid, policies, makeFeePayment, challenge } =
+			request.body as VerifyPresentationRequestBody;
 		// Extract request parameters from query
 		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyPresentationResponseQuery;
 
@@ -192,18 +266,16 @@ export class PresentationController {
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
 		try {
+			const engine = await identityServiceStrategySetup.routed('presentation');
 			if (makeFeePayment) {
-				const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
+				const setResult = await cheqdPresentation.trySetStatusList2021(engine);
 				if (setResult.error) {
 					return response.status(setResult.status).send({
 						error: setResult.error,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
 				if (cheqdPresentation.isPaymentNeeded()) {
-					const feePaymentResult = await cheqdPresentation.makeFeePayment(
-						identityServiceStrategySetup.agent,
-						response.locals.customer
-					);
+					const feePaymentResult = await cheqdPresentation.makeFeePayment(engine, response.locals.customer);
 					// Track fee payments
 					feePaymentOptions = feePaymentResult.data;
 					// handle error
@@ -234,12 +306,13 @@ export class PresentationController {
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			// verify presentation
-			const result = await identityServiceStrategySetup.agent.verifyPresentation(
+			const result = await engine.verifyPresentation(
 				cheqdPresentation,
 				{
 					verifyStatus,
 					policies,
 					domain: verifierDid,
+					challenge,
 				},
 				response.locals.customer
 			);
@@ -264,6 +337,15 @@ export class PresentationController {
 
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
+			if (error instanceof PresentationBindingRequiredError) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					verified: false,
+					error: error.message,
+					code: error.code,
+				});
+			}
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			// define error
 			const errorRef = error as Record<string, unknown>;
 			// handle doesn't meet condition

@@ -1,4 +1,4 @@
-import { APIRequestContext, expect } from '@playwright/test';
+import { APIRequestContext, expect, type TestInfo } from '@playwright/test';
 import {
 	DEFAULT_STATUS_LIST_ENCRYPTED_NAME,
 	DEFAULT_STATUS_LIST_INDICES,
@@ -163,3 +163,11 @@ export async function createDID(request: APIRequestContext, payload): Promise<st
 	const reponseJson = await response.json();
 	return reponseJson.did as string;
 }
+
+/**
+ * A status change publishes to testnet, which sometimes fails part-way through. When Playwright retries the test, the
+ * first attempt may already have made the change, so Studio answers 409 (nothing changed). That 409 is accepted only on
+ * a retry; the verification that follows every change still checks the resulting status.
+ */
+export const alreadyAppliedOnRetry = (status: number, testInfo: TestInfo): boolean =>
+	testInfo.retry > 0 && status === 409;

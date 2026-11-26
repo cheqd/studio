@@ -36,6 +36,10 @@ export class LogToProvider extends OAuthProvider implements IOAuthProvider {
 		return await this.logToHelper.getUserScopes(userId);
 	}
 
+	public async getUserRoles(userId: string): Promise<ICommonErrorResponse> {
+		return await this.logToHelper.getUserRoles(userId);
+	}
+
 	public async getAppScopes(appId: string): Promise<ICommonErrorResponse> {
 		return await this.logToHelper.getAppScopes(appId);
 	}

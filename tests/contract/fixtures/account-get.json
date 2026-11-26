@@ -1,0 +1,32 @@
+{
+	"schema": 1,
+	"stepId": "account-get",
+	"routeId": "GET /account",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.132Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/account"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"customer": {
+					"customerId": "<uuid:1>",
+					"name": "<email>"
+				},
+				"paymentAccount": {
+					"mainnet": "<address:1>",
+					"testnet": "<address:2>"
+				}
+			}
+		}
+	}
+}
