@@ -29,6 +29,13 @@ export const CACHE_TTL_MS = 5 * 60_000;
 export const FAILURE_TTL_MS = 30_000;
 export const MAX_CACHE_ENTRIES = 200;
 const OVERALL_BUDGET_MS = 25_000;
+/**
+ * How recent Studio's own record of a write must be for an empty index answer to count as "not indexed yet" rather
+ * than "no writes". The cheqd data API indexes the ledger after the fact and can run behind it.
+ */
+export const INDEX_DELAY_WINDOW_MS = 24 * 60 * 60_000;
+/** Studio's newest write this much later than the index's newest one means the index is behind. */
+const INDEX_BEHIND_TOLERANCE_MS = 5 * 60_000;
 
 export interface DayPoint {
 	date: string;
@@ -51,7 +58,8 @@ export type CustomerLedgerAnalytics =
 	| ({ supported: false; reason: string } & Window)
 	| ({
 			supported: true;
-			state: 'ok' | 'empty';
+			/** `delayed`: Studio made writes recently that the ledger index does not show yet (not zero activity). */
+			state: 'ok' | 'empty' | 'delayed';
 			reason?: string;
 			networks: LedgerNetwork[];
 			tiles: {
@@ -149,8 +157,8 @@ export class CustomerLedgerAnalyticsService {
 		);
 		this.remember(key, value);
 		const result = await value;
-		if (!result.supported) {
-			// Shorten the memory of a failure so recovery shows quickly
+		if (!result.supported || result.state === 'delayed') {
+			// Shorten the memory of a failure, or of an index that has not caught up, so recovery shows quickly
 			const entry = this.cache.get(key);
 			if (entry && entry.value === value) entry.expires = nowMs + FAILURE_TTL_MS;
 		}
@@ -232,6 +240,12 @@ export class CustomerLedgerAnalyticsService {
 		}
 		const networks = usable.map((a) => a.namespace as LedgerNetwork);
 		const empty = first === null && writes.length === 0;
+		// Studio's own record of its latest write for this customer, to tell "not indexed yet" from "none"
+		const local = await this.latestLocalWrite(customerId);
+		const nowMs = this.now();
+		const delayed = empty && local !== null && nowMs - local.getTime() < INDEX_DELAY_WINDOW_MS;
+		const behind =
+			!empty && local !== null && (last === null || local.getTime() - last.getTime() > INDEX_BEHIND_TOLERANCE_MS);
 		return this.build(base, {
 			networks,
 			writes,
@@ -240,8 +254,33 @@ export class CustomerLedgerAnalyticsService {
 			truncated: results.some((r) => r.list.capped),
 			identifiers,
 			empty,
-			reason: empty ? 'No ledger writes from your payer account yet.' : undefined,
+			delayed,
+			indexBehind: behind ? local : null,
+			reason: delayed
+				? `Studio made ledger writes for this account (the latest at ${local?.toISOString()}) that the ledger index does not show yet. The index (cheqd data API) can run behind the ledger; this is not zero activity. Check again later.`
+				: empty
+					? 'No ledger writes from your payer account yet.'
+					: undefined,
 		});
+	}
+
+	/** When Studio last recorded a DID or resource it wrote for this customer, or null. Never fails the answer. */
+	private async latestLocalWrite(customerId: string): Promise<Date | null> {
+		try {
+			const rows = (await this.db().query(
+				`SELECT GREATEST(
+					(SELECT MAX("saveDate") FROM "identifier" WHERE "customerId" = $1::uuid AND "did" LIKE 'did:cheqd:%'),
+					(SELECT MAX("createdAt") FROM "resource" WHERE "customerId" = $1::uuid)
+				) AS "latest"`,
+				[customerId]
+			)) as Array<{ latest: Date | string | null }>;
+			const latest = rows[0]?.latest;
+			if (!latest) return null;
+			const date = latest instanceof Date ? latest : new Date(latest);
+			return Number.isNaN(date.getTime()) ? null : date;
+		} catch {
+			return null;
+		}
 	}
 
 	private build(
@@ -254,10 +293,13 @@ export class CustomerLedgerAnalyticsService {
 			truncated: boolean;
 			identifiers: Map<string, 'organisation' | 'agent'>;
 			empty: boolean;
+			delayed?: boolean;
+			/** Studio's latest write, when it is newer than anything the index shows. */
+			indexBehind?: Date | null;
 			reason?: string;
 		}
 	): CustomerLedgerAnalytics {
-		const { networks, first, last, truncated, identifiers, empty, reason } = data;
+		const { networks, first, last, truncated, identifiers, empty, delayed, indexBehind, reason } = data;
 		const allWrites = data.writes;
 		const writes = allWrites.filter((w) => {
 			if (base.kind === 'all') return true;
@@ -322,9 +364,13 @@ export class CustomerLedgerAnalyticsService {
 		if (base.kind !== 'all') notes.push('Identifiers Studio no longer holds are only counted under kind=all.');
 		if (truncated)
 			notes.push('More writes exist in this range than are read at once; the counts are a lower bound.');
+		if (indexBehind)
+			notes.push(
+				`The ledger index has not caught up: Studio wrote for this account at ${indexBehind.toISOString()}, after the newest write the index shows. Recent writes may not be counted yet.`
+			);
 		return {
 			supported: true,
-			state: empty ? 'empty' : 'ok',
+			state: delayed ? 'delayed' : empty ? 'empty' : 'ok',
 			...(reason ? { reason } : {}),
 			...base,
 			networks,
